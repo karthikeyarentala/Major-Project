@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = '2df3581f02eb51540b682ceb234da481081128e7b2079e8396e8b57ee1f194e3';
+const privateKey = '3a0b816e4fac677ab3ca2b4b7b40c44d52347cd540a76c631af0243faab0dcb3';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,7 +17,7 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0x6f3b0eC34F1CcE2A7291eF43D73931442FF48fbD';
+const contractAddress = '0x3DFd42934e3e9d126fc69f188e3Ffe9D6c59B9CC';
 
 let idsLogsContract;
 let trustedReporterAddress;
