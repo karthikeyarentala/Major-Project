@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = '12034d2033ded721430c28ea678fcecf10116f92b72760525a295843fd452099';
+const privateKey = '20ef2a8b892ac9ff071eb7d483202c050e606e0b1747ff8d05150580e743f399';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,7 +17,7 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0x0550171E06681505C4c5C98494dDCf8462091d7b';
+const contractAddress = '0x928B8f8652f621aBaF207111D683Db8aE1Ba1626';
 
 let idsLogsContract;
 let trustedReporterAddress;
@@ -43,7 +43,12 @@ const initialize = async () => {
 
 // A POST endpoint to receive security alerts
 app.post('/api/log-alert', async (req, res) => {
+    const analyzeLogData = (logData) =>{
+        const suspeciousKeywords = ["revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", "exploit", "vulnerability", "ddos", "ransomware", "spyware", "trojan", "worm", "suspicious", "hack", "compromise"];
+        return suspeciousKeywords.some(keyword => logData.toLowerCase().includes(keyword));
+    }
     const { alertId, sourceType, logData } = req.body;
+    const isSuspecious = analyzeLogData(logData);
 
     if (!alertId || !sourceType || !logData) {
         return res.status(400).json({ error: 'Missing required alert data' });
@@ -53,7 +58,8 @@ app.post('/api/log-alert', async (req, res) => {
         const transaction = idsLogsContract.methods.addAlert(
             alertId,
             sourceType,
-            logData
+            logData,
+            isSuspecious
         );
         const gasEstimate = await transaction.estimateGas({ from: trustedReporterAddress });
         await transaction.send({
@@ -128,7 +134,8 @@ app.get('/api/get-alert/:index', async (req, res) => {
             sourceType: alert.sourceType,
             logData: alert.logData,
             timestamp: alert.timestamp.toString(),
-            reporter: alert.reporter
+            reporter: alert.reporter,
+            isSuspecious: alert.isSuspecious
         }
         res.status(200).json(sanitizedAlert);
     } catch (error) {
