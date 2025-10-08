@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = '20ef2a8b892ac9ff071eb7d483202c050e606e0b1747ff8d05150580e743f399';
+const privateKey = '08d7de1134781ed198f821e2b3aae7d870fc845e44c650af89d28098e34e0837';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,10 +17,18 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0x928B8f8652f621aBaF207111D683Db8aE1Ba1626';
+const contractAddress = '0xCF4c375fE51b20c91ee4e9F9cF82018658D379Ff';
 
 let idsLogsContract;
 let trustedReporterAddress;
+
+// Function to analyze log data for suspecious keywords
+const analyzeLogData = (logData) =>{
+        if(!logData) return false;
+
+        const suspeciousKeywords = ["revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", "exploit", "error", "ssh denied", "vulnerability", "ddos", "ransomware", "spyware", "trojan", "worm", "suspicious", "hack", "compromise"];
+        return suspeciousKeywords.some(keyword => logData.toLowerCase().includes(keyword));
+    }
 
 // Function to initialize the contract
 const initialize = async () => {
@@ -43,11 +51,9 @@ const initialize = async () => {
 
 // A POST endpoint to receive security alerts
 app.post('/api/log-alert', async (req, res) => {
-    const analyzeLogData = (logData) =>{
-        const suspeciousKeywords = ["revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", "exploit", "vulnerability", "ddos", "ransomware", "spyware", "trojan", "worm", "suspicious", "hack", "compromise"];
-        return suspeciousKeywords.some(keyword => logData.toLowerCase().includes(keyword));
-    }
+
     const { alertId, sourceType, logData } = req.body;
+
     const isSuspecious = analyzeLogData(logData);
 
     if (!alertId || !sourceType || !logData) {
