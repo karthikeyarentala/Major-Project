@@ -11,7 +11,7 @@ interface Alert {
     reporter: string;
 }
 
-const contractAddress = '0x9bFe151745e459972D8e95812E9d248b082a6C3e'; // PASTE OUR CONTRACT ADDRESS HERE
+const contractAddress = '0x0550171E06681505C4c5C98494dDCf8462091d7b'; // PASTE OUR CONTRACT ADDRESS HERE
 const ganachePort = 8545;
 
 function App() {
