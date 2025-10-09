@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = 'e8079da340264d7d2cf5636f4d93f957ebf662eb567cfd40931d241606e7a979';
+const privateKey = '600ca01ced89c9cf5590e494c5105d12b98daaf716357825b6c4da9dd6d02f77';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,7 +17,7 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0x77d4372a7F82831376a61751f9c92E605258D3F1';
+const contractAddress = '0xFD8D25D0d6174492C4723b537E0EbAe4EDC646a8';
 
 let idsLogsContract;
 let trustedReporterAddress;
@@ -31,7 +31,7 @@ const analyzeLogData = (logData) =>{
             "exploit", "error", "ssh denied", "vulnerability", "ddos", "ransomware", "spyware", 
             "trojan", "worm", "suspicious", "hack", "compromise"
         ];
-        
+
         const lowerCaseLogData = logData.toLowerCase();
         return SUSPICIOUS_KEYWORDS.some(keyword => lowerCaseLogData.includes(keyword));
 }
