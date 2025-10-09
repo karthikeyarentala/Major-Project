@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = '08d7de1134781ed198f821e2b3aae7d870fc845e44c650af89d28098e34e0837';
+const privateKey = '3dbe9d4137262f38c2f4ecbd5ac94080821805ddd310f5db48d39e4899e7c24f';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,18 +17,23 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0xCF4c375fE51b20c91ee4e9F9cF82018658D379Ff';
+const contractAddress = '0xB1d0BE6166C64A980a12957C7cBfF33D1481649d';
 
 let idsLogsContract;
 let trustedReporterAddress;
 
 // Function to analyze log data for suspecious keywords
 const analyzeLogData = (logData) =>{
-        if(!logData) return false;
+        if(!logData || typeof logData != 'string') return false;
 
-        const suspeciousKeywords = ["revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", "exploit", "error", "ssh denied", "vulnerability", "ddos", "ransomware", "spyware", "trojan", "worm", "suspicious", "hack", "compromise"];
-        return suspeciousKeywords.some(keyword => logData.toLowerCase().includes(keyword));
-    }
+        const suspiciousKeywords = [
+            "revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", 
+            "exploit", "error", "ssh denied", "vulnerability", "ddos", "ransomware", "spyware", 
+            "trojan", "worm", "suspicious", "hack", "compromise"
+        ];
+        const lowerCaseLogData = logData.toLowerCase();
+        return suspiciousKeywords.some(keyword => lowerCaseLogData.includes(keyword));
+}
 
 // Function to initialize the contract
 const initialize = async () => {
@@ -65,7 +70,7 @@ app.post('/api/log-alert', async (req, res) => {
             alertId,
             sourceType,
             logData,
-            isSuspecious
+            isSuspicious
         );
         const gasEstimate = await transaction.estimateGas({ from: trustedReporterAddress });
         await transaction.send({
@@ -141,7 +146,7 @@ app.get('/api/get-alert/:index', async (req, res) => {
             logData: alert.logData,
             timestamp: alert.timestamp.toString(),
             reporter: alert.reporter,
-            isSuspecious: alert.isSuspecious
+            isSuspicious: alert.isSuspecious
         }
         res.status(200).json(sanitizedAlert);
     } catch (error) {

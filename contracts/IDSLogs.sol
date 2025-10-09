@@ -21,7 +21,7 @@ contract IDSLogs {
         // The Ethereum address of the entity that reported the alert.
         address reporter;
         // suspecious check of the alert
-        bool isSuspecious;
+        bool isSuspicious;
     }
 
     // A dynamic array to store all the security alerts.
@@ -90,7 +90,7 @@ contract IDSLogs {
         string memory _alertId,
         string memory _sourceType,
         string memory _logData,
-        bool _isSuspecious
+        bool _isSuspicious
     ) public {
         // A require statement checks for a condition and reverts the transaction if it's false.
         // This ensures only trusted reporters can add alerts.
@@ -104,7 +104,7 @@ contract IDSLogs {
                 logData: _logData,
                 timestamp: block.timestamp,
                 reporter: msg.sender,
-                isSuspecious: _isSuspecious
+                isSuspecious: _isSuspicious
             })
         );
         

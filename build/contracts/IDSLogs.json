@@ -13233,10 +13233,16 @@
       "links": {},
       "address": "0xCF4c375fE51b20c91ee4e9F9cF82018658D379Ff",
       "transactionHash": "0x0944f91423fbf5239cf98a1ef0624e99c9a9203a854356222deb66324ad4466a"
+    },
+    "1759987969058": {
+      "events": {},
+      "links": {},
+      "address": "0xB1d0BE6166C64A980a12957C7cBfF33D1481649d",
+      "transactionHash": "0x101f725f7cbbf8f96b5867a1004c7b78a9498f25ac9d4a9f60357cee5e3bf0ec"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-10-08T09:37:24.825Z",
+  "updatedAt": "2025-10-09T05:35:48.094Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "A smart contract to store and manage immutable security logs on the Ethereum blockchain. This prevents attackers from tampering with forensic evidence.",

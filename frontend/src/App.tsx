@@ -12,7 +12,7 @@ interface Alert {
     isSuspecious: boolean;
 }
 
-const contractAddress = '0xCF4c375fE51b20c91ee4e9F9cF82018658D379Ff'; // PASTE OUR CONTRACT ADDRESS HERE
+const contractAddress = '0xB1d0BE6166C64A980a12957C7cBfF33D1481649d'; // PASTE OUR CONTRACT ADDRESS HERE
 const ganachePort = 8545;
 
 function App() {
