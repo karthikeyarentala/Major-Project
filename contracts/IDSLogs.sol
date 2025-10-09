@@ -104,7 +104,7 @@ contract IDSLogs {
                 logData: _logData,
                 timestamp: block.timestamp,
                 reporter: msg.sender,
-                isSuspecious: _isSuspicious
+                isSuspicious: _isSuspicious
             })
         );
         

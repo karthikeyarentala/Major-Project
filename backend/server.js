@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(express.json());
 
-const privateKey = '3dbe9d4137262f38c2f4ecbd5ac94080821805ddd310f5db48d39e4899e7c24f';
+const privateKey = 'e8079da340264d7d2cf5636f4d93f957ebf662eb567cfd40931d241606e7a979';
 const provider = new HDWalletProvider(privateKey, 'http://127.0.0.1:8545');
 const web3 = new Web3(provider);
 
@@ -17,7 +17,7 @@ web3.eth.transactionConfirmationBlocks = 1;
 web3.eth.transactionBlockTimeout = 5;
 web3.eth.defaultTransactionType = 0;
 
-const contractAddress = '0xB1d0BE6166C64A980a12957C7cBfF33D1481649d';
+const contractAddress = '0x77d4372a7F82831376a61751f9c92E605258D3F1';
 
 let idsLogsContract;
 let trustedReporterAddress;
@@ -26,13 +26,14 @@ let trustedReporterAddress;
 const analyzeLogData = (logData) =>{
         if(!logData || typeof logData != 'string') return false;
 
-        const suspiciousKeywords = [
+        const SUSPICIOUS_KEYWORDS = [
             "revert", "error", "failed", "unauthorized", "attack", "malware", "phishing", "breach", 
             "exploit", "error", "ssh denied", "vulnerability", "ddos", "ransomware", "spyware", 
             "trojan", "worm", "suspicious", "hack", "compromise"
         ];
+        
         const lowerCaseLogData = logData.toLowerCase();
-        return suspiciousKeywords.some(keyword => lowerCaseLogData.includes(keyword));
+        return SUSPICIOUS_KEYWORDS.some(keyword => lowerCaseLogData.includes(keyword));
 }
 
 // Function to initialize the contract
@@ -59,7 +60,7 @@ app.post('/api/log-alert', async (req, res) => {
 
     const { alertId, sourceType, logData } = req.body;
 
-    const isSuspecious = analyzeLogData(logData);
+    const isSuspicious = analyzeLogData(logData);
 
     if (!alertId || !sourceType || !logData) {
         return res.status(400).json({ error: 'Missing required alert data' });
@@ -146,7 +147,7 @@ app.get('/api/get-alert/:index', async (req, res) => {
             logData: alert.logData,
             timestamp: alert.timestamp.toString(),
             reporter: alert.reporter,
-            isSuspicious: alert.isSuspecious
+            isSuspicious: alert.isSuspicious
         }
         res.status(200).json(sanitizedAlert);
     } catch (error) {

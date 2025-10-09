@@ -9,10 +9,10 @@ interface Alert {
     logData: string;
     timestamp: bigint; // BigInt is the correct type for Solidity's uint256
     reporter: string;
-    isSuspecious: boolean;
+    isSuspicious: boolean;
 }
 
-const contractAddress = '0xB1d0BE6166C64A980a12957C7cBfF33D1481649d'; // PASTE OUR CONTRACT ADDRESS HERE
+const contractAddress = '0x77d4372a7F82831376a61751f9c92E605258D3F1'; // PASTE OUR CONTRACT ADDRESS HERE
 const ganachePort = 8545;
 
 function App() {
@@ -66,7 +66,7 @@ function App() {
                             <strong>ID:</strong> {alert.alertId}<br />
                             <strong>Source:</strong> {alert.sourceType}<br />
                             <strong>Data:</strong> {alert.logData}<br />
-                            <strong>Status:</strong> {alert.isSuspecious ? '🔴 SUSPICIOUS' : '🟢 SAFE'}<br />
+                            <strong>Status:</strong> {alert.isSuspicious ? '🔴 SUSPICIOUS' : '🟢 SAFE'}<br />
                             <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
                         </li>
                     ))}
