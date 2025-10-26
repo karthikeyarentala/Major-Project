@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// FIX 1: Import Web3 from a CDN to make it available in the browser preview
 import Web3 from 'web3';
-
-// FIX 2: Remove the file import. We will define the minimal ABI we need right here.
-// import IDSLogsContract from './IDSLogs.json';
 
 // Define a TypeScript interface for the Alert data structure
 interface Alert {
@@ -102,10 +98,8 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0x77090e1AFd87D9f54aF665E2b15D85850dFE0DCf'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0xA5054Cd62bd77bD85d0b354d66917CE033abCb22'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
-// backendApiUrl is no longer needed as we removed the form
-// const backendApiUrl = 'http://localhost:3001/api/log-alert';
 
 // --- Simple Styles ---
 // We'll add class names for the animations later
@@ -121,15 +115,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: '1px solid #ddd', // Base border
         padding: '15px',
         borderRadius: '8px',
-        marginBottom: '10px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        marginBottom: '22px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         transition: 'background-color 0.2s ease-in-out', // Keep hover transition
-        position: 'relative', // Needed for potential border-image or pseudo-elements if box-shadow fails
-        overflow: 'hidden' // Keep glow contained
+        position: 'relative', // For glow effect
+        overflow: 'visible' // Keep glow contained
     },
-    // Keep border styles for color indicator
-    logSuspiciousBorder: { borderLeft: '5px solid #ad1b0bff' },
-    logSafeBorder: { borderLeft: '5px solid #067d38ff' },
     statusText: { fontWeight: 'bold', textTransform: 'uppercase' },
     suspiciousText: { color: '#e74c3c' },
     safeText: { color: '#2ecc71' },

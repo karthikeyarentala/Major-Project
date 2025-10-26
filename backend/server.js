@@ -10,9 +10,9 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-const MNEMONIC = 'shallow hub solve more peasant crane luggage ecology dynamic link armor festival';
+const MNEMONIC = 'always pool end grace ready cactus giggle alarm shoot print hire stool';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x77090e1AFd87D9f54aF665E2b15D85850dFE0DCf';
+const CONTRACT_ADDRESS = '0xA5054Cd62bd77bD85d0b354d66917CE033abCb22';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
