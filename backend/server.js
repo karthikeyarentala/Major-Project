@@ -3,16 +3,18 @@ const { Web3 } = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const IDSLogsContract = require('../build/contracts/IDSLogs.json');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
-const MNEMONIC = 'always pool end grace ready cactus giggle alarm shoot print hire stool';
+const MNEMONIC = 'execute base suffer paddle dentist machine space actual gap blush salt assume';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xA5054Cd62bd77bD85d0b354d66917CE033abCb22';
+const CONTRACT_ADDRESS = '0xa2FC9C6E4A5313F39d27f2a5D1a70bD34bC4c629';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
