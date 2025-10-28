@@ -12,9 +12,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'execute base suffer paddle dentist machine space actual gap blush salt assume';
+const MNEMONIC = 'misery chat situate december list knee math arch reflect human position coffee';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xa2FC9C6E4A5313F39d27f2a5D1a70bD34bC4c629';
+const CONTRACT_ADDRESS = '0x2B2Bce8d6E8f0092BaeE057b2E42fF8a3aD92bA5';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -103,11 +103,11 @@ app.post('/api/log-alert', async (req,res)=>{
       modelVersion
     );
 
-    const gasEstimate = await transaction.estimateGas({ from: acc });
-
+    //const gasEstimate = await transaction.estimateGas({ from: acc });
+    const fixedGasLimit = 500000n; // Set a fixed gas limit
     const txReceipt = await transaction.send({
     from: acc,
-    gas: gasEstimate + 100000n,
+    gas: fixedGasLimit,
     });
 
 

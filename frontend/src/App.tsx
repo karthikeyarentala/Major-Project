@@ -99,14 +99,15 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xa2FC9C6E4A5313F39d27f2a5D1a70bD34bC4c629'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0x2B2Bce8d6E8f0092BaeE057b2E42fF8a3aD92bA5'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
-const backendApiUrl = 'http://localhost:3001/api/log-alert';
+const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
 // --- Simple Styles ---
 // We'll add class names for the animations later
 const styles: { [key: string]: React.CSSProperties } = {
     // UPDATED: Main container width to fit layout
+    body : { background: '#000'},
     container: { fontFamily: 'Arial, sans-serif', width: '1470px', margin: '20px auto', padding: '20px', backgroundColor: '#000000', color: '#fff' },
     h1: { color: '#240572ff', textAlign: 'center', marginBottom: '30px' }, // Added margin bottom
     h2: { color: '#240572ff', borderBottom: '2px solid #bdc3c7', paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }, // Added margin bottom
@@ -120,13 +121,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     message: { padding: '12px', borderRadius: '4px', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' },
     error: { background: '#e74c3c', color: 'white', border: '1px solid #c0392b' },
     success: { background: '#2ecc71', color: 'white', border: '1px solid #27ae60' },
-    logList: { listStyleType: 'none', padding: '0', maxHeight: '70vh', overflowY: 'auto' }, // Added max height and scroll
+    logList: { listStyleType: 'none', padding: '0', maxHeight: 'auto', overflowY: 'auto' }, // Added max height and scroll
     logItem: {
         background: '#000',
         border: '1px solid #fff',
-        padding: '15px',
+        padding: '18px',
         borderRadius: '8px',
-        marginBottom: '22px', // Slightly reduced margin
+        marginBottom: '23px', // Slightly reduced margin
         boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
         transition: 'background-color 0.2s ease-in-out',
         position: 'relative',
@@ -158,33 +159,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     label: { display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#eee' },
     input: { width: 'calc(100% - 22px)', padding: '10px', border: '1px solid #555', borderRadius: '4px', fontSize: '1rem', backgroundColor: '#444', color: '#fff' },
     textarea: { width: 'calc(100% - 22px)', padding: '10px', border: '1px solid #555', borderRadius: '4px', minHeight: '60px', /* Reduced height */ resize: 'vertical', fontSize: '1rem', backgroundColor: '#444', color: '#fff' },
-    button: { background: '#3498db', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', width: '100%' },
+    button: { background: '#240572ff', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', width: '100%' },
     buttonDisabled: { background: '#bdc3c7', cursor: 'not-allowed' },
+    filterSection: { background: '#222', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', marginBottom: '30px' },
+    clearButton: { background: '#e74c3c', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', marginTop: '15px', width: '100%' }, 
 };
 // --- End Styles ---
-
-// --- CSS Keyframes for Electric Border ---
-/*const electricBorderStyles = `
-  @keyframes electric-red {
-    0% { box-shadow: 0 0 3px 2px rgba(231, 76, 60, 0.7); }
-    50% { box-shadow: 0 0 10px 4px rgba(231, 76, 60, 1); }
-    100% { box-shadow: 0 0 3px 2px rgba(231, 76, 60, 0.7); }
-  }
-  @keyframes electric-green {
-    0% { box-shadow: 0 0 3px 2px rgba(46, 204, 113, 0.7); }
-    50% { box-shadow: 0 0 10px 4px rgba(46, 204, 113, 1); }
-    100% { box-shadow: 0 0 3px 2px rgba(46, 204, 113, 0.7); }
-  }
-
-  .electric-border-red {
-    animation: electric-red 1.5s infinite linear;
-  }
-
-  .electric-border-green {
-    animation: electric-green 1.5s infinite linear;
-  }
-`;*/
-// --- End Keyframes ---
 
 function App() {
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -198,6 +178,13 @@ function App() {
     const [newLogData, setNewLogData] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiSuccess, setApiSuccess] = useState<string | null>(null);
+
+    // Filters State
+    const [filterStatus, setFilterStatus] = useState<'all' | 'safe' | 'suspicious'>('all');
+    const [filterRequestType, setFilterRequestType] = useState<string>('all');
+    const [filterStatusCode, setFilterStatusCode] = useState<string>('');
+    const [filterUserAgent, setFilterUserAgent] = useState<string>('');
+    const [filterLocation, setFilterLocation] = useState<string>('');
 
 
     const fetchAlerts = useCallback(async () => {
@@ -297,11 +284,48 @@ function App() {
         setIsSubmitting(false);
     };
 
+    // Filters Logic code
+    const filteredAlerts = alerts.filter(alert => {
+        // Filter by status
+        if(filterStatus === 'safe' && alert.isSuspicious) return false;
+        if(filterStatus === 'suspicious' && !alert.isSuspicious) return false;
+
+        // Parse logData for other filters
+        const logParts = alert.logData.trim().split(' ');
+        const reqType = logParts[0] || '';
+        const statusCode = logParts[1] || '';
+        const userAgent = logParts.slice(2, -1).join(' ') || ''; // Handle multi-word user agents
+        const location = logParts[logParts.length - 1] || '';
+
+        // Filter by request type
+        if(filterRequestType !== 'all' && reqType.toLowerCase() !== filterRequestType.toLowerCase()) return false;
+
+        // Filter by status code
+        if(filterStatusCode && !statusCode.includes(filterStatusCode)) return false;
+
+        // Filter by user agent
+        if(filterUserAgent && !userAgent.toLowerCase().includes(filterUserAgent.toLowerCase())) return false;
+
+        // Filter by location
+        if(filterLocation && !location.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+
+        return true;
+    });
+
+    // Handler to clear all filters
+    const clearFilters = () => {
+        setFilterStatus('all');
+        setFilterRequestType('all');
+        setFilterStatusCode('');
+        setFilterUserAgent('');
+        setFilterLocation('');
+    };
+
 
     return (
         <div style={styles.container}>
 
-            <h1 style={styles.h1}>Decentralized Intrusion Detection System</h1>
+            <h1 style={styles.h1}>Blockchain-Based Intrusion Detection System</h1>
 
             {/* NEW: Main Layout Div */}
             <div style={styles.mainLayout}>
@@ -359,8 +383,80 @@ function App() {
                             {isSubmitting ? 'Submitting...' : 'Analyze & Store'}
                         </button>
                     </form>
+                    {/* --- End Form Column --- */}
+
+                    {/* --- Filters Section --- */}
+                    <h2 style={{...styles.h2}}>Filter Logs</h2>
+                    <div style={styles.filterSection}>
+                         <div style={styles.formGroup}>
+                            <label htmlFor="filterStatus" style={styles.label}>Status</label>
+                            <select
+                                id="filterStatus"
+                                style={styles.select}
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'safe' | 'suspicious')}
+                            >
+                                <option value="all">All</option>
+                                <option value="safe">Safe Only</option>
+                                <option value="suspicious">Suspicious Only</option>
+                            </select>
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="filterRequestType" style={styles.label}>Request Type</label>
+                             <select
+                                id="filterRequestType"
+                                style={styles.select}
+                                value={filterRequestType}
+                                onChange={(e) => setFilterRequestType(e.target.value)}
+                            >
+                                <option value="all">All</option>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="filterStatusCode" style={styles.label}>Status Code (contains)</label>
+                            <input
+                                type="text"
+                                id="filterStatusCode"
+                                style={styles.input}
+                                value={filterStatusCode}
+                                onChange={(e) => setFilterStatusCode(e.target.value)}
+                                placeholder="e.g., 404, 500"
+                            />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="filterUserAgent" style={styles.label}>User Agent (contains)</label>
+                            <input
+                                type="text"
+                                id="filterUserAgent"
+                                style={styles.input}
+                                value={filterUserAgent}
+                                onChange={(e) => setFilterUserAgent(e.target.value)}
+                                placeholder="e.g., Bot, Firefox"
+                            />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="filterLocation" style={styles.label}>Location (contains)</label>
+                            <input
+                                type="text"
+                                id="filterLocation"
+                                style={styles.input}
+                                value={filterLocation}
+                                onChange={(e) => setFilterLocation(e.target.value)}
+                                placeholder="e.g., USA, China"
+                            />
+                        </div>
+                        <button onClick={clearFilters} style={styles.clearButton}>
+                            Clear Filters
+                        </button>
+                    </div>
+                    {/* --- End Filters Section --- */}
+
                 </div>
-                {/* --- End Form Column --- */}
+                {/* --- End Form and Filter Column --- */}
 
 
                 {/* --- Logs Column --- */}
@@ -369,7 +465,7 @@ function App() {
                     {apiError && !isSubmitting && <div style={{ ...styles.message, ...styles.error, marginBottom: '20px' }}>{apiError}</div>}
 
                     <h2 style={styles.h2}>
-                        Stored Immutable Logs
+                        Stored Immutable Logs ({filteredAlerts.length} matching)
                         <button
                             onClick={handleRefresh}
                             style={loading ? {...styles.refreshButton, ...styles.refreshButtonLoading} : styles.refreshButton}
@@ -381,11 +477,11 @@ function App() {
 
                     {loading && alerts.length === 0 ? (
                         <div>Loading alerts...</div>
-                    ) : !loading && alerts.length === 0 && !apiError ? (
+                    ) : !loading && filteredAlerts.length === 0 && !apiError ? (
                         <p>No alerts found on the blockchain.</p>
                     ) : (
                         <ul style={styles.logList}>
-                            {alerts.map((alert, index) => {
+                            {filteredAlerts.map((alert, index) => {
                                 const isHovered = hoveredIndex === index;
                                 const baseBorderStyle = alert.isSuspicious ? styles.logSuspiciousBorder : styles.logSafeBorder;
                                 const hoverStyle = isHovered
