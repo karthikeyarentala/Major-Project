@@ -7,10 +7,10 @@ interface Alert {
     alertId: string;
     sourceType: string;
     logHash: string;
-    timestamp: bigint; // BigInt is the correct type for Solidity's uint256
+    timestamp: number; 
     reporter: string;
     isSuspicious: boolean;
-    confidence: bigint;
+    confidence: number;
     modelVersion: string;
 }
 
@@ -55,14 +55,14 @@ const IDSLogsContract = {
                             "type": "string"
                         },
                         {
-                            "internalType": "string",
-                            "name": "logData",
-                            "type": "string"
+                            "internalType": "bytes32",
+                            "name": "logHash",
+                            "type": "bytes32"
                         },
                         {
-                            "internalType": "uint256",
+                            "internalType": "number",
                             "name": "timestamp",
-                            "type": "uint256"
+                            "type": "number"
                         },
                         {
                             "internalType": "address",
@@ -200,15 +200,24 @@ function App() {
 
             const fetchedAlerts: Alert[] = [];
             for (let i = 0; i < Number(alertCount); i++) {
-                const [alertId, sourceType, logHash, timestamp, reporter, isSuspicious, confidence, modelVersion] = await idsLogsContract.methods.getAlert(i).call() as any;
+                const [
+                    alertId,
+                    sourceType,
+                    logHash,
+                    timestamp,
+                    reporter,
+                    isSuspicious,
+                    confidence,
+                    modelVersion
+                ] = await idsLogsContract.methods.getAlert(i).call() as any;
                 fetchedAlerts.push({
                     alertId: alertId,
                     sourceType: sourceType,
                     logHash: logHash,
-                    timestamp: timestamp,
+                    timestamp: Number(timestamp),
                     reporter: reporter,
                     isSuspicious: isSuspicious,
-                    confidence: confidence,
+                    confidence: Number(confidence),
                     modelVersion: modelVersion,
                 });
             }
