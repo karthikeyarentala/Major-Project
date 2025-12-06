@@ -7,14 +7,15 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const crypto = require('crypto');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'misery chat situate december list knee math arch reflect human position coffee';
+const MNEMONIC = 'library artefact later address pride hidden lawsuit topic snack spider party truck';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x60897718b666D7Fa5D04bee6826660739a7457F6';
+const CONTRACT_ADDRESS = '0xC7451600c3637d86927cC6302B9Ff52AD239B90a';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -70,13 +71,15 @@ app.post('/api/log-alert', async (req,res)=>{
 
     console.log(`🔍 Received new log: ${alertId}`);
 
+    const logHash = crypto.createHash('sha256').update(logData).digest('hex');
+    const logHashBytes32 = '0x' + logHash;  // prefixes the 0x for web3 to treat as bytes32
+    console.log(`Log Hash (SHA-256): ${logHashBytes32}`);
+
     // Step 1: Call ML microservice
     let mlResult;
     try {
       const response = await axios.post(ML_API_URL, {
-        alertId,
-        sourceType,
-        logData,
+        logData: logData,
       });
       mlResult = response.data;
     } catch (err) {
@@ -97,7 +100,7 @@ app.post('/api/log-alert', async (req,res)=>{
     const transaction = idsLogsContract.methods.addAlert(
       alertId,
       sourceType,
-      logData,
+      logHashBytes32,
       isSuspicious,
       confidencePct,
       modelVersion

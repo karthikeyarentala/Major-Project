@@ -5,7 +5,7 @@ contract IDSLogs {
     struct Alert {
         string alertId;
         string sourceType;
-        string logData;
+        bytes32 logHash;
         uint256 timestamp;
         address reporter;
         bool isSuspicious;        // ML-detected flag
@@ -52,7 +52,7 @@ contract IDSLogs {
     function addAlert(
         string memory _alertId,
         string memory _sourceType,
-        string memory _logData,
+        bytes32 _logHash,
         bool _isSuspicious,
         uint16 _confidencePct,
         string memory _modelVersion
@@ -61,7 +61,7 @@ contract IDSLogs {
         alerts.push(Alert({
             alertId: _alertId,
             sourceType: _sourceType,
-            logData: _logData,
+            logHash: _logHash,
             timestamp: ts,
             reporter: msg.sender,
             isSuspicious: _isSuspicious,
@@ -71,9 +71,28 @@ contract IDSLogs {
         emit AlertAdded(alerts.length - 1, _alertId, _isSuspicious, _confidencePct, _modelVersion, ts);
     }
 
-    function getAlert(uint256 _index) public view returns (Alert memory) {
+    function getAlert(uint256 _index) public view returns (
+            string memory alertId,
+            string memory sourceType,
+            bytes32 logHash,
+            uint256 timestamp,
+            address reporter,
+            bool isSuspicious,
+            uint16 confidencePct,
+            string memory modelVersion
+    ) {
         require(_index < alerts.length, "Index out of bounds");
-        return alerts[_index];
+        Alert memory a = alerts[_index];
+        return (
+            a.alertId,
+            a.sourceType,
+            a.logHash,
+            a.timestamp,
+            a.reporter,
+            a.isSuspicious,
+            a.confidencePct,
+            a.modelVersion
+        );
     }
 
     function getAlertsCount() public view returns (uint256){

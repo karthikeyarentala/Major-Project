@@ -6,11 +6,10 @@ import Web3 from 'web3';
 interface Alert {
     alertId: string;
     sourceType: string;
-    logData: string;
+    logHash: string;
     timestamp: bigint; // BigInt is the correct type for Solidity's uint256
     reporter: string;
     isSuspicious: boolean;
-    // These fields are from your contract
     confidence: bigint;
     modelVersion: string;
 }
@@ -99,7 +98,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0x60897718b666D7Fa5D04bee6826660739a7457F6'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0xC7451600c3637d86927cC6302B9Ff52AD239B90a'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -181,12 +180,8 @@ function App() {
 
     // Filters State
     const [filterStatus, setFilterStatus] = useState<'all' | 'safe' | 'suspicious'>('all');
-    const [filterRequestType, setFilterRequestType] = useState<string>('all');
-    const [filterStatusCode, setFilterStatusCode] = useState<string>('');
-    const [filterUserAgent, setFilterUserAgent] = useState<string>('');
-    const [filterLocation, setFilterLocation] = useState<string>('');
 
-
+    
     const fetchAlerts = useCallback(async () => {
         console.log("Fetching alerts...");
         // Keep loading true if it's already true (initial load), otherwise just log refresh
@@ -205,16 +200,16 @@ function App() {
 
             const fetchedAlerts: Alert[] = [];
             for (let i = 0; i < Number(alertCount); i++) {
-                const alert = await idsLogsContract.methods.getAlert(i).call() as any;
+                const [alertId, sourceType, logHash, timestamp, reporter, isSuspicious, confidence, modelVersion] = await idsLogsContract.methods.getAlert(i).call() as any;
                 fetchedAlerts.push({
-                    alertId: alert[0],
-                    sourceType: alert[1],
-                    logData: alert[2],
-                    timestamp: alert[3],
-                    reporter: alert[4],
-                    isSuspicious: alert[5],
-                    confidence: alert[6],
-                    modelVersion: alert[7],
+                    alertId: alertId,
+                    sourceType: sourceType,
+                    logHash: logHash,
+                    timestamp: timestamp,
+                    reporter: reporter,
+                    isSuspicious: isSuspicious,
+                    confidence: confidence,
+                    modelVersion: modelVersion,
                 });
             }
 
@@ -241,10 +236,8 @@ function App() {
         setApiError(null);
         setApiSuccess(null);
 
-        // CRITICAL VALIDATION: Check if logData looks like the required format
-        const logParts = newLogData.trim().split(' ');
-        if (logParts.length < 4) { // Needs at least Request_Type, Status_Code, User_Agent, Location
-            setApiError("Log Data format seems incorrect. Must be: Request_Type Status_Code User_Agent Location (at least 4 words)");
+        if (!newAlertId || !newSourceType || !newLogData) {{
+            setApiError("All fields are required.");
             setIsSubmitting(false);
             return;
         }
@@ -289,38 +282,14 @@ function App() {
         // Filter by status
         if(filterStatus === 'safe' && alert.isSuspicious) return false;
         if(filterStatus === 'suspicious' && !alert.isSuspicious) return false;
-
-        // Parse logData for other filters
-        const logParts = alert.logData.trim().split(' ');
-        const reqType = logParts[0] || '';
-        const statusCode = logParts[1] || '';
-        const userAgent = logParts.slice(2, -1).join(' ') || ''; // Handle multi-word user agents
-        const location = logParts[logParts.length - 1] || '';
-
-        // Filter by request type
-        if(filterRequestType !== 'all' && reqType.toLowerCase() !== filterRequestType.toLowerCase()) return false;
-
-        // Filter by status code
-        if(filterStatusCode && !statusCode.includes(filterStatusCode)) return false;
-
-        // Filter by user agent
-        if(filterUserAgent && !userAgent.toLowerCase().includes(filterUserAgent.toLowerCase())) return false;
-
-        // Filter by location
-        if(filterLocation && !location.toLowerCase().includes(filterLocation.toLowerCase())) return false;
-
         return true;
     });
+
 
     // Handler to clear all filters
     const clearFilters = () => {
         setFilterStatus('all');
-        setFilterRequestType('all');
-        setFilterStatusCode('');
-        setFilterUserAgent('');
-        setFilterLocation('');
     };
-
 
     return (
         <div style={styles.container}>
@@ -405,10 +374,7 @@ function App() {
                             <label htmlFor="filterRequestType" style={styles.label}>Request Type</label>
                              <select
                                 id="filterRequestType"
-                                style={styles.select}
-                                value={filterRequestType}
-                                onChange={(e) => setFilterRequestType(e.target.value)}
-                            >
+                                style={styles.select}>
                                 <option value="all">All</option>
                                 <option value="GET">GET</option>
                                 <option value="POST">POST</option>
@@ -422,8 +388,6 @@ function App() {
                                 type="text"
                                 id="filterStatusCode"
                                 style={styles.input}
-                                value={filterStatusCode}
-                                onChange={(e) => setFilterStatusCode(e.target.value)}
                                 placeholder="e.g., 404, 500"
                             />
                         </div>
@@ -433,8 +397,6 @@ function App() {
                                 type="text"
                                 id="filterUserAgent"
                                 style={styles.input}
-                                value={filterUserAgent}
-                                onChange={(e) => setFilterUserAgent(e.target.value)}
                                 placeholder="e.g., Bot, Firefox"
                             />
                         </div>
@@ -444,8 +406,6 @@ function App() {
                                 type="text"
                                 id="filterLocation"
                                 style={styles.input}
-                                value={filterLocation}
-                                onChange={(e) => setFilterLocation(e.target.value)}
                                 placeholder="e.g., USA, China"
                             />
                         </div>
@@ -503,7 +463,7 @@ function App() {
                                     >
                                         <strong>ID:</strong> {alert.alertId}<br />
                                         <strong>Source:</strong> {alert.sourceType}<br />
-                                        <strong>Data:</strong> {alert.logData}<br />
+                                        <strong>Data:</strong> {alert.logHash}<br />
                                         <strong>Status:</strong> {alert.isSuspicious ?
                                             <span style={{ ...styles.statusText, ...styles.suspiciousText }}>🔴 SUSPICIOUS</span> :
                                             <span style={{ ...styles.statusText, ...styles.safeText }}>🟢 SAFE</span>
@@ -523,6 +483,7 @@ function App() {
             </div> {/* End Main Layout Div */}
         </div>
     );
+}
 }
 
 export default App;
