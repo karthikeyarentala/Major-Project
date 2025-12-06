@@ -14,7 +14,7 @@ app.use(cors());
 
 const MNEMONIC = 'misery chat situate december list knee math arch reflect human position coffee';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x2B2Bce8d6E8f0092BaeE057b2E42fF8a3aD92bA5';
+const CONTRACT_ADDRESS = '0x60897718b666D7Fa5D04bee6826660739a7457F6';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
