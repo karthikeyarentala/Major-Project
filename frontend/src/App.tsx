@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { FormEvent } from 'react';
+//import type { FormEvent } from 'react';
 import Web3 from 'web3';
 
 // Define a TypeScript interface for the Alert data structure
@@ -42,8 +42,7 @@ const IDSLogsContract = {
             ],
             "name": "getAlert",
             "outputs": [
-                {
-                    "components": [
+                    
                         {
                             "internalType": "string",
                             "name": "alertId",
@@ -77,18 +76,13 @@ const IDSLogsContract = {
                         {
                             "internalType": "uint16",
                             "name": "confidence",
-                            "type": "uint256"
+                            "type": "uint16"
                         },
                         {
                             "internalType": "string",
                             "name": "modelVersion",
                             "type": "string"
                         }
-                    ],
-                    "internalType": "struct IDSLogs.Alert",
-                    "name": "",
-                    "type": "tuple"
-                }
             ],
             "stateMutability": "view",
             "type": "function"
@@ -98,9 +92,9 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0x5f78A6274189d0577618aAbe3C59765c04750C7d'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0x116796992276147559C416DAb86CfD838dA42D81'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
-const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
+//const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
 // --- Simple Styles ---
 // We'll add class names for the animations later
@@ -172,11 +166,11 @@ function App() {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     // --- Re-added State for the Form ---
-    const [newAlertId, setNewAlertId] = useState('');
+    /*const [newAlertId, setNewAlertId] = useState('');
     const [newSourceType, setNewSourceType] = useState('');
     const [newLogData, setNewLogData] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [apiSuccess, setApiSuccess] = useState<string | null>(null);
+    const [apiSuccess, setApiSuccess] = useState<string | null>(null);*/
 
     // Filters State
     const [filterStatus, setFilterStatus] = useState<'all' | 'safe' | 'suspicious'>('all');
@@ -202,19 +196,17 @@ function App() {
             const fetchedAlerts: Alert[] = [];
             
             for (let i = 0; i < totalAlerts; i++) { 
-                const [
-                    alertId, sourceType, logHash, timestamp, reporter, isSuspicious, confidence, modelVersion
-                ] = await idsLogsContract.methods.getAlert(i).call() as any;
+                const res = await idsLogsContract.methods.getAlert(i).call() as any;
 
                 fetchedAlerts.push({
-                    alertId: alertId,
-                    sourceType: sourceType,
-                    logHash: logHash,
-                    timestamp: Number(String(timestamp)), 
-                    reporter: reporter,
-                    isSuspicious: isSuspicious,
-                    confidence: Number(String(confidence)),
-                    modelVersion: modelVersion,
+                    alertId: res[0],
+                    sourceType: res[1],
+                    logHash: res[2],
+                    timestamp: Number(String(res[3])), 
+                    reporter: res[4],
+                    isSuspicious: res[5],
+                    confidence: Number(String(res[6])),
+                    modelVersion: res[7],
                 });
             }
             setAlerts(fetchedAlerts.reverse());
@@ -234,7 +226,7 @@ function App() {
     };
 
     // --- Re-added Submit Handler ---
-    const handleSubmit = async (e: FormEvent) => {
+    /*const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setApiError(null);
@@ -279,7 +271,7 @@ function App() {
             }
         }
         setIsSubmitting(false);
-    };
+    };*/
 
     // Filters Logic code
     const filteredAlerts = alerts.filter(alert => {
@@ -305,59 +297,7 @@ function App() {
 
                 {/* --- Form Column --- */}
                 <div style={styles.formColumn}>
-                    <h2 style={{...styles.h2}}>Submit New Log</h2>
-                    <form onSubmit={handleSubmit} style={styles.form}>
-                        <div style={styles.formGroup}>
-                            <label htmlFor="alertId" style={styles.label}>Alert ID</label>
-                            <input
-                                type="text"
-                                id="alertId"
-                                style={styles.input}
-                                value={newAlertId}
-                                onChange={(e) => setNewAlertId(e.target.value)}
-                                placeholder="e.g., ALERT-700"
-                                required
-                            />
-                        </div>
-                        <div style={styles.formGroup}>
-                            <label htmlFor="sourceType" style={styles.label}>Source Type</label>
-                            <input
-                                type="text"
-                                id="sourceType"
-                                style={styles.input}
-                                value={newSourceType}
-                                onChange={(e) => setNewSourceType(e.target.value)}
-                                placeholder="e.g., Firewall, WebApp, API"
-                                required
-                            />
-                        </div>
-                        <div style={styles.formGroup}>
-                            <label htmlFor="logData" style={styles.label}>Log Data</label>
-                            <textarea
-                                id="logData"
-                                style={styles.textarea}
-                                value={newLogData}
-                                onChange={(e) => setNewLogData(e.target.value)}
-                                placeholder="CRITICAL: Must match model format, e.g., 'POST 404 Scraper Russia'"
-                                required
-                            />
-                        </div>
-
-                        {/* Display submit errors/success within the form */}
-                        {apiError && isSubmitting && <div style={{ ...styles.message, ...styles.error }}>{apiError}</div>}
-                        {apiSuccess && <div style={{ ...styles.message, ...styles.success }}>{apiSuccess}</div>}
-
-
-                        <button
-                            type="submit"
-                            style={isSubmitting ? { ...styles.button, ...styles.buttonDisabled } : styles.button}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Analyze & Store'}
-                        </button>
-                    </form>
-                    {/* --- End Form Column --- */}
-
+                    
                     {/* --- Filters Section --- */}
                     <h2 style={{...styles.h2}}>Filter Logs</h2>
                     <div style={styles.filterSection}>
@@ -386,7 +326,7 @@ function App() {
                                 <option value="DELETE">DELETE</option>
                             </select>
                         </div>
-                        <div style={styles.formGroup}>
+                        {/* <div style={styles.formGroup}>
                             <label htmlFor="filterStatusCode" style={styles.label}>Status Code (contains)</label>
                             <input
                                 type="text"
@@ -413,6 +353,7 @@ function App() {
                                 placeholder="e.g., USA, China"
                             />
                         </div>
+                        */}
                         <button onClick={clearFilters} style={styles.clearButton}>
                             Clear Filters
                         </button>
@@ -426,7 +367,7 @@ function App() {
                 {/* --- Logs Column --- */}
                 <div style={styles.logsColumn}>
                     {/* Display blockchain connection error if it occurs */}
-                    {apiError && !isSubmitting && <div style={{ ...styles.message, ...styles.error, marginBottom: '20px' }}>{apiError}</div>}
+                    {apiError && <div style={{ ...styles.message, ...styles.error, marginBottom: '20px' }}>{apiError}</div>}
 
                     <h2 style={styles.h2}>
                         Stored Immutable Logs ({filteredAlerts.length} matching)

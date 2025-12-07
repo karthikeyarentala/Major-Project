@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'armed wing limit quit cart thing tortoise happy guard square floor volcano';
+const MNEMONIC = 'bright tourist owner dinner sister glory love march swamp ghost enjoy base';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x5f78A6274189d0577618aAbe3C59765c04750C7d';
+const CONTRACT_ADDRESS = '0x116796992276147559C416DAb86CfD838dA42D81';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
