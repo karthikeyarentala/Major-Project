@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'library artefact later address pride hidden lawsuit topic snack spider party truck';
+const MNEMONIC = 'minor flee copy buffalo tiny cement cabin spare taxi upon moment moon';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xC7451600c3637d86927cC6302B9Ff52AD239B90a';
+const CONTRACT_ADDRESS = '0xF76EbC77997838bAFfE23350bB4f709ea4B93721';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 

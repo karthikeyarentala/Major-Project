@@ -60,9 +60,9 @@ const IDSLogsContract = {
                             "type": "bytes32"
                         },
                         {
-                            "internalType": "number",
+                            "internalType": "uint256",
                             "name": "timestamp",
-                            "type": "number"
+                            "type": "uint256"
                         },
                         {
                             "internalType": "address",
@@ -75,7 +75,7 @@ const IDSLogsContract = {
                             "type": "bool"
                         },
                         {
-                            "internalType": "uint256",
+                            "internalType": "uint16",
                             "name": "confidence",
                             "type": "uint256"
                         },
@@ -98,7 +98,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xC7451600c3637d86927cC6302B9Ff52AD239B90a'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0xF76EbC77997838bAFfE23350bB4f709ea4B93721'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -196,32 +196,27 @@ function App() {
             );
 
             const alertCount = await idsLogsContract.methods.getAlertsCount().call();
-            console.log("Alert count from blockchain:", String(alertCount));
-
+            const totalAlerts = Number(alertCount); 
+            console.log("Alert count from blockchain:", String(totalAlerts));
+                        
             const fetchedAlerts: Alert[] = [];
-            for (let i = 0; i < Number(alertCount); i++) {
+            
+            for (let i = 0; i < totalAlerts; i++) { 
                 const [
-                    alertId,
-                    sourceType,
-                    logHash,
-                    timestamp,
-                    reporter,
-                    isSuspicious,
-                    confidence,
-                    modelVersion
+                    alertId, sourceType, logHash, timestamp, reporter, isSuspicious, confidence, modelVersion
                 ] = await idsLogsContract.methods.getAlert(i).call() as any;
+
                 fetchedAlerts.push({
                     alertId: alertId,
                     sourceType: sourceType,
                     logHash: logHash,
-                    timestamp: Number(timestamp),
+                    timestamp: Number(String(timestamp)), 
                     reporter: reporter,
                     isSuspicious: isSuspicious,
-                    confidence: Number(confidence),
+                    confidence: Number(String(confidence)),
                     modelVersion: modelVersion,
                 });
             }
-
             setAlerts(fetchedAlerts.reverse());
         } catch (error) {
             console.error('Failed to fetch alerts:', error);
@@ -245,7 +240,7 @@ function App() {
         setApiError(null);
         setApiSuccess(null);
 
-        if (!newAlertId || !newSourceType || !newLogData) {{
+        if (!newAlertId || !newSourceType || !newLogData) {
             setApiError("All fields are required.");
             setIsSubmitting(false);
             return;
@@ -477,7 +472,7 @@ function App() {
                                             <span style={{ ...styles.statusText, ...styles.suspiciousText }}>🔴 SUSPICIOUS</span> :
                                             <span style={{ ...styles.statusText, ...styles.safeText }}>🟢 SAFE</span>
                                         }<br />
-                                        <strong>Confidence:</strong> {String(alert.confidence)}%<br />
+                                        <strong>Confidence:</strong> {alert.confidence}%<br />
                                         <strong>Model:</strong> {alert.modelVersion}<br />
                                         <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
                                         <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
@@ -492,7 +487,6 @@ function App() {
             </div> {/* End Main Layout Div */}
         </div>
     );
-}
 }
 
 export default App;
