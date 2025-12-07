@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'minor flee copy buffalo tiny cement cabin spare taxi upon moment moon';
+const MNEMONIC = 'armed wing limit quit cart thing tortoise happy guard square floor volcano';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xF76EbC77997838bAFfE23350bB4f709ea4B93721';
+const CONTRACT_ADDRESS = '0x5f78A6274189d0577618aAbe3C59765c04750C7d';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 

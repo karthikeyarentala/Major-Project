@@ -98,7 +98,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xF76EbC77997838bAFfE23350bB4f709ea4B93721'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0x5f78A6274189d0577618aAbe3C59765c04750C7d'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
