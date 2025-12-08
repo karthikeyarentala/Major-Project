@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'bright tourist owner dinner sister glory love march swamp ghost enjoy base';
+const MNEMONIC = 'one cancel piece scatter chaos embark dust concert cake sand hollow uncle';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x116796992276147559C416DAb86CfD838dA42D81';
+const CONTRACT_ADDRESS = '0x543C1d843C45Aa6DF5eeC4DD0fA9dbd7E6Bbfefd';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
