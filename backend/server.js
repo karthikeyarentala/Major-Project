@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'bullet document craft spirit betray erupt report web alien glass pulp almost';
+const MNEMONIC = 'glove flee direct embrace theory leaf forum tragic shuffle hole connect feel';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xA5C53F4F45B5Eb8b7c6FE5C7BFa8323b4F07c2f3';
+const CONTRACT_ADDRESS = '0x29Ff6Cb0AE9e25Ea8724d2E34234A6a1fc0eC8F9';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
