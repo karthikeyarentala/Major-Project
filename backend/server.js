@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'glove flee direct embrace theory leaf forum tragic shuffle hole connect feel';
+const MNEMONIC = 'spell cash pigeon mandate isolate useless mention coast alpha link field audit';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x29Ff6Cb0AE9e25Ea8724d2E34234A6a1fc0eC8F9';
+const CONTRACT_ADDRESS = '0x10B7Cf7befd70F7e994A01521805e7f9622Aa764';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
