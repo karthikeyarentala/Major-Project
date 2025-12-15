@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'giggle garbage bracket mango raise spoon pigeon endless pause segment muffin suspect';
+const MNEMONIC = 'unusual setup vibrant chat grid blood dolphin reject viable purpose argue aware';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x796f8D06Ca3729DfD5507071E473AB4FCCE0C90b';
+const CONTRACT_ADDRESS = '0x73af371A49B933d2C07bBD00f79359aEA6f80C67';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 

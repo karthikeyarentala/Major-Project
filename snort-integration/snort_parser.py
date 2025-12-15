@@ -70,19 +70,34 @@ if __name__ == "__main__":
 
 import time
 import os
+import re
+import json
 
 LOG_FILE = r'C:\Snort\log\alerts.log' # Use r-string for Windows path
 
 def parse_alert_line(line):
-    """
-    Simple function to parse the alert_fast format.
-    [**] [1:1000001:1] TEST: ICMP Ping Detected [**]
-    [Classification: Misc activity] [Priority: 3]
-    09/25-10:00:00.123456 IP 192.168.1.100 -> 8.8.8.8 ICMP Echo request
-    """
-    if "TEST: ICMP Ping Detected" in line:
-        # You can implement more complex parsing here to extract timestamps, IPs, etc.
-        print(f"!!! THREAT DETECTED !!!: {line.strip()}")
+    line = line.strip()
+
+    if line.startswith("[**]"):
+        match = re.search(r'\[\*\*\]\s+\[(\d+:\d+:\d+)\]\s+(.*?)\[\*\*\]\s+\[Classification:\s+(.*?)\]\s+\[Priority:\s+(\d+)\]\s+\{(.*?)\}\s+([\d\.:]+)\s+->\s+([\d\.:]+)', line)
+        if match:
+            sid, msg, classification, priority, protocol, src, dst = match.groups()
+            # creating a JSON object 
+            alert_data = {
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                "sid": sid,
+                "message": msg.strip(),
+                "classification": classification.strip(),
+                "priority": priority.strip(),
+                "protocol": protocol.strip(),
+                "source_ip": src.strip(),
+                "destination_ip": dst.strip()
+            }
+            print("---THREAT DETECTED---")
+            print(json.dumps(alert_data, indent=4))
+            return alert_data
+        print(f"!!! ALERT DETECTED !!!: {line}")
+        return None
     else:
         # Handle other types of alerts if needed
         pass
@@ -91,7 +106,7 @@ def tail_file(filepath):
     # Continuously monitor a file for new lines.
     print(f"Waiting for Snort to create the log file at: {filepath}")
 
-    # 1. Wait for the file to exist
+    # 1. Wait for the file to be created
     while not os.path.exists(filepath):
         # Print a dot every 2 seconds to show it's active
         print(".", end="", flush=True) 
@@ -99,8 +114,9 @@ def tail_file(filepath):
     
     print("\nLog file found! Starting monitoring...")
 
-    # 2. Open and monitor the file as before
-    with open(filepath, 'r') as f:
+    # 2. Open and monitor the file. 'r' mode is fine for continuous reading
+    with open(filepath, 'r', encoding='utf-8') as f:
+        # Move cursor to the end of the file so we only read new lines
         f.seek(0, 2)
         
         while True:
@@ -110,7 +126,8 @@ def tail_file(filepath):
                 continue
             
             # Process the new line
-            parse_alert_line(new_line)
+            parsed_data = parse_alert_line(new_line)
+            # In a real application, you would send parsed_data to your React API here.
 
 if __name__ == "__main__":
     tail_file(LOG_FILE)
