@@ -1,4 +1,4 @@
-"""import time as t
+import time as t
 import requests as req
 import re
 from datetime import datetime as dt
@@ -66,9 +66,8 @@ def sendToBackend(payload):
 if __name__ == "__main__":
     monitor_snort_log()
 
-"""
 
-import time
+"""import time
 import os
 import re
 import json
@@ -130,4 +129,4 @@ def tail_file(filepath):
             # In a real application, you would send parsed_data to your React API here.
 
 if __name__ == "__main__":
-    tail_file(LOG_FILE)
+    tail_file(LOG_FILE)"""

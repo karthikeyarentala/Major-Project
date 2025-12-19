@@ -13,9 +13,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'unusual setup vibrant chat grid blood dolphin reject viable purpose argue aware';
+const MNEMONIC = 'repair boring quote what mercy lava speed update swarm always trip element';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x73af371A49B933d2C07bBD00f79359aEA6f80C67';
+const CONTRACT_ADDRESS = '0x6DD7A30716C58c53FD96F71874928d1b78f875B6';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
