@@ -3,13 +3,22 @@ import requests as req
 import re
 from datetime import datetime as dt
 import os
+import threading as th
+import json
+from scapy.all import sniff, IP, TCP, UDP, ICMP
 
 SNORT_ALERT_FILE = r'C:\Snort\log\alerts.log'
 BACKEND_API_URL = "http://127.0.0.1:3001/api/log-alert"
+SNORT_PATTERN = re.compile(r'^\[\*\*\] \[(\d+):\d+:\d+\] (.*?) \[.*\] \{(\w+)\} (\S+):(\S+) -> (\S+):(\S+)')
 
-SNORT_PATTERN = re.compile(
-    r'^\[\*\*\] \[(\d+):\d+:\d+\] (.*?) \[.*\] \{(\w+)\} (\S+):(\S+) -> (\S+):(\S+)'
-)
+def sendToBackend(payload):
+    #It sends the parsed alert payload to the Node.JS API for hashing and blockchain anchoring
+    try:
+        res = req.post(BACKEND_API_URL, json=payload, timeout=2)
+        res.raise_for_status()
+        print(f"✅ Alert send to Node.JS. Status: {res.status_code}, Response: {res.text}")
+    except req.exceptions.RequestException as e:
+        print(f"❌ ERROR communicating with Node.JS backend: {e}")
 
 def parse_snort_alert(line):
     #It parses a single line of snort alert_fast output
@@ -21,14 +30,30 @@ def parse_snort_alert(line):
         protocol = match.group(3)
         src_ip = match.group(4)
 
-        log_data = f"PROTOCOL: {protocol} | SID: {rule_sid} | DESC: {description} | SRC: {src_ip}"
+        #log_data = f"PROTOCOL: {protocol} | SID: {rule_sid} | DESC: {description} | SRC: {src_ip}"
 
         return {
-            'alertID': f"SNORT-ID-{rule_sid}-{dt.now().strftime('%Y%m%d%H%M%S%f')}",
+            'alertID': f"SNORT-ID-{rule_sid}-{t.time()}",
             'sourceType': 'NIDS_Snort_Alert',
-            'logData': log_data
+            'severity': 'Suspicious',
+            'logData': f"ALERT: {description} | SRC: {src_ip} | PROT: {protocol}"
         }
     return None
+
+def capture_live_traffic(packet):
+    if packet.haslayer(IP):
+        src_ip = packet[IP].src
+        dst_ip = packet[IP].dst
+        protocol = "TCP" if packet.haslayer(TCP) else "UDP" if packet.haslayer(UDP) else "ICMP" if packet.haslayer(ICMP) else "OTHER"
+
+        safeData = {
+            'alertID': f"SAFE-{t.time()}",
+            'sourceType': "Live_Traffic",
+            'severity': 'Safe',
+            'logData': f"PASS {src_ip} -> {dst_ip} | PROT: {protocol}"
+        }
+        
+        sendToBackend(safeData)
 
 def monitor_snort_log():
     #It continuously monitors the Snort alert log files
@@ -54,79 +79,6 @@ def monitor_snort_log():
     except Exception as e:
         print(f"An unexpected error occurred in the parser: {e}")
 
-def sendToBackend(payload):
-    #It sends the parsed alert payload to the Node.JS API for hashing and blockchain anchoring
-    try:
-        res = req.post(BACKEND_API_URL, json=payload, timeout=5)
-        res.raise_for_status()
-        print(f"✅ Alert send to Node.JS. Status: {res.status_code}, Response: {res.text}")
-    except req.exceptions.RequestException as e:
-        print(f"❌ ERROR communicating with Node.JS backend: {e}")
 
 if __name__ == "__main__":
     monitor_snort_log()
-
-
-"""import time
-import os
-import re
-import json
-
-LOG_FILE = r'C:\Snort\log\alerts.log' # Use r-string for Windows path
-
-def parse_alert_line(line):
-    line = line.strip()
-
-    if line.startswith("[**]"):
-        match = re.search(r'\[\*\*\]\s+\[(\d+:\d+:\d+)\]\s+(.*?)\[\*\*\]\s+\[Classification:\s+(.*?)\]\s+\[Priority:\s+(\d+)\]\s+\{(.*?)\}\s+([\d\.:]+)\s+->\s+([\d\.:]+)', line)
-        if match:
-            sid, msg, classification, priority, protocol, src, dst = match.groups()
-            # creating a JSON object 
-            alert_data = {
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                "sid": sid,
-                "message": msg.strip(),
-                "classification": classification.strip(),
-                "priority": priority.strip(),
-                "protocol": protocol.strip(),
-                "source_ip": src.strip(),
-                "destination_ip": dst.strip()
-            }
-            print("---THREAT DETECTED---")
-            print(json.dumps(alert_data, indent=4))
-            return alert_data
-        print(f"!!! ALERT DETECTED !!!: {line}")
-        return None
-    else:
-        # Handle other types of alerts if needed
-        pass
-
-def tail_file(filepath):
-    # Continuously monitor a file for new lines.
-    print(f"Waiting for Snort to create the log file at: {filepath}")
-
-    # 1. Wait for the file to be created
-    while not os.path.exists(filepath):
-        # Print a dot every 2 seconds to show it's active
-        print(".", end="", flush=True) 
-        time.sleep(2)
-    
-    print("\nLog file found! Starting monitoring...")
-
-    # 2. Open and monitor the file. 'r' mode is fine for continuous reading
-    with open(filepath, 'r', encoding='utf-8') as f:
-        # Move cursor to the end of the file so we only read new lines
-        f.seek(0, 2)
-        
-        while True:
-            new_line = f.readline()
-            if not new_line:
-                time.sleep(0.1)
-                continue
-            
-            # Process the new line
-            parsed_data = parse_alert_line(new_line)
-            # In a real application, you would send parsed_data to your React API here.
-
-if __name__ == "__main__":
-    tail_file(LOG_FILE)"""

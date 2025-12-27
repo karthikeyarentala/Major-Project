@@ -8,14 +8,16 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'repair boring quote what mercy lava speed update swarm always trip element';
+const MNEMONIC = 'tomato edge puzzle public trial broccoli lesson fatal theme traffic wolf resist';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x6DD7A30716C58c53FD96F71874928d1b78f875B6';
+const CONTRACT_ADDRESS = '0xd974c3f8AD5E14a7822bD99235ac903d5fAe22dD';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -60,74 +62,83 @@ let web3, idsLogsContract, acc;
   }
 })();
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {origin: "*"}
+})
 
-app.post('/api/log-alert', async (req,res)=>{
+app.post('/api/log-alert', async (req, res) => {
     try {
-    const { alertId, sourceType, logData } = req.body;
+        const { alertId, sourceType, logData, severity } = req.body;
 
-    if (!alertId || !sourceType || !logData) {
-      return res.status(400).json({ error: "Missing required fields." });
-    }
+        if (!alertId || !sourceType || !logData) {
+            return res.status(400).json({ error: "Missing required fields." });
+        }
 
-    console.log(`🔍 Received new log: ${alertId}`);
+        // This sends the data to the UI before it even touches the blockchain
+        io.emit('new-live-log', {
+            alertId,
+            sourceType,
+            logData,
+            severity: severity || 'Safe', 
+            timestamp: Math.floor(Date.now() / 1000)
+        });
 
-    const logHash = crypto.createHash('sha256').update(logData).digest('hex');
-    const logHashBytes32 = '0x' + logHash;  // prefixes the 0x for web3 to treat as bytes32
-    console.log(`Log Hash (SHA-256): ${logHashBytes32}`);
+        console.log(`📡 Broadcasted live log: ${alertId} (${severity})`);
 
-    // Step 1: Call ML microservice
-    let mlResult;
-    try {
-      const response = await axios.post(ML_API_URL, {
-        logData: logData,
-      });
-      mlResult = response.data;
+        // IF SAFE TRAFFIC, STOP HERE
+        if (severity === 'Safe') {
+            return res.json({ success: true, message: "Safe traffic broadcasted." });
+        }
+
+        // IF SUSPICIOUS, CONTINUE TO ML & BLOCKCHAIN
+        console.log(`🔍 Processing Suspicious log: ${alertId}`);
+        const logHash = crypto.createHash('sha256').update(logData).digest('hex');
+        const logHashBytes32 = '0x' + logHash;
+
+        // ML microservice
+        let mlResult;
+        try {
+            const response = await axios.post(ML_API_URL, { logData: logData });
+            mlResult = response.data;
+        } catch (err) {
+            console.error("❌ Error contacting ML service:", err.message);
+            return res.status(500).json({ error: "ML service unavailable" });
+        }
+
+        const isSuspicious = mlResult.isSuspicious || false;
+        const confidencePct = Math.round((mlResult.confidence || 0) * 100);
+        const modelVersion = mlResult.modelVersion || "unknown";
+
+        // Storing in blockchain
+        const transaction = idsLogsContract.methods.addAlert(
+            alertId,
+            sourceType,
+            logHashBytes32,
+            isSuspicious,
+            confidencePct,
+            modelVersion
+        );
+
+        const txReceipt = await transaction.send({
+            from: acc,
+            gas: 500000n,
+        });
+
+        console.log(`✅ Blockchain transaction successful: ${txReceipt.transactionHash}`);
+
+        res.json({
+            success: true,
+            txHash: txReceipt.transactionHash,
+            isSuspicious,
+            confidencePct,
+            modelVersion,
+        });
+
     } catch (err) {
-      console.error("❌ Error contacting ML service:", err.message);
-      return res.status(500).json({ error: "ML service unavailable" });
+        console.error("❌ Error adding alert:", err);
+        res.status(500).json({ error: "Internal server error" });
     }
-
-    const isSuspicious = mlResult.isSuspicious || false;
-    const confidence = mlResult.confidence || 0;
-    const modelVersion = mlResult.modelVersion || "unknown";
-    const confidencePct = Math.round(confidence * 100);
-
-    console.log(
-      `🤖 ML Result: Suspicious=${isSuspicious}, Confidence=${confidencePct}%, Model=${modelVersion}`
-    );
-
-    // Step 2: Store in blockchain
-    const transaction = idsLogsContract.methods.addAlert(
-      alertId,
-      sourceType,
-      logHashBytes32,
-      isSuspicious,
-      confidencePct,
-      modelVersion
-    );
-
-    //const gasEstimate = await transaction.estimateGas({ from: acc });
-    const fixedGasLimit = 500000n; // Set a fixed gas limit
-    const txReceipt = await transaction.send({
-    from: acc,
-    gas: fixedGasLimit,
-    });
-
-
-    console.log(`✅ Transaction successful: ${txReceipt.transactionHash}`);
-
-    // Step 3: Return response
-    res.json({
-      success: true,
-      txHash: txReceipt.transactionHash,
-      isSuspicious,
-      confidencePct,
-      modelVersion,
-    });
-  } catch (err) {
-    console.error("❌ Error adding alert:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
 });
 
 //Getting an alert
@@ -151,4 +162,5 @@ app.get("/api/alerts", async (req, res) => {
 // Start the server and initialize web3
 app.listen(PORT, () => {
     console.log(`Backend server listening at http://localhost:${PORT}`);
+    console.log(`WebSocket server is active for live logs...`);
 });

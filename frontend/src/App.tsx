@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 //import type { FormEvent } from 'react';
 import Web3 from 'web3';
+import io from 'socket.io-client';
+const socket = io('http://localhost:3001')
 
 // Define a TypeScript interface for the Alert data structure
 interface Alert {
@@ -92,7 +94,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0x6DD7A30716C58c53FD96F71874928d1b78f875B6'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0xd974c3f8AD5E14a7822bD99235ac903d5fAe22dD'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 //const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -164,6 +166,16 @@ function App() {
     const [loading, setLoading] = useState<boolean>(true);
     const [apiError, setApiError] = useState<string | null>(null);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [liveLogs, setLiveLogs] = useState<any[]>([]);
+
+    useEffect(() => {
+        socket.on('new-live-log', (data) => {
+            setLiveLogs((prev) => [data, ...prev].slice(0, 20)); 
+        });
+        return () => {socket.disconnect();};
+    }, []);
+
+    const allLogs = [...liveLogs, ...alerts];
 
     // --- Re-added State for the Form ---
     /*const [newAlertId, setNewAlertId] = useState('');
@@ -274,7 +286,7 @@ function App() {
     };*/
 
     // Filters Logic code
-    const filteredAlerts = alerts.filter(alert => {
+    const allLogsFilter = allLogs.filter(alert => {
         // Filter by status
         if(filterStatus === 'safe' && alert.isSuspicious) return false;
         if(filterStatus === 'suspicious' && !alert.isSuspicious) return false;
@@ -370,7 +382,7 @@ function App() {
                     {apiError && <div style={{ ...styles.message, ...styles.error, marginBottom: '20px' }}>{apiError}</div>}
 
                     <h2 style={styles.h2}>
-                        Stored Immutable Logs ({filteredAlerts.length} matching)
+                        Live Traffic and Immutable Logs ({allLogs.length} total)
                         <button
                             onClick={handleRefresh}
                             style={loading ? {...styles.refreshButton, ...styles.refreshButtonLoading} : styles.refreshButton}
@@ -382,21 +394,23 @@ function App() {
 
                     {loading && alerts.length === 0 ? (
                         <div>Loading alerts...</div>
-                    ) : !loading && filteredAlerts.length === 0 && !apiError ? (
-                        <p>No alerts found on the blockchain.</p>
+                    ) : allLogs.length === 0 ? (
+                        <p>No Network activity detected at..!</p>
                     ) : (
                         <ul style={styles.logList}>
-                            {filteredAlerts.map((alert, index) => {
+                            {allLogs.map((alert, index) => {
                                 const isHovered = hoveredIndex === index;
-                                const baseBorderStyle = alert.isSuspicious ? styles.logSuspiciousBorder : styles.logSafeBorder;
+                                const isLive = !alert.reporter;
+                                const isSuspicious = alert.severity === 'Suspicious' || alert.isSuspicious;
+                                const baseBorderStyle = isSuspicious ? styles.logSuspiciousBorder : styles.logSafeBorder;
                                 const hoverStyle = isHovered
-                                    ? (alert.isSuspicious ? styles.logItemHoverSuspicious : styles.logItemHoverSafe)
+                                    ? (isSuspicious ? styles.logItemHoverSuspicious : styles.logItemHoverSafe)
                                     : {};
-                                const animationClass = alert.isSuspicious ? 'electric-border-red' : 'electric-border-green';
+                                const animationClass = isSuspicious ? 'electric-border-red' : 'electric-border-green';
 
                                 return (
                                     <li
-                                        key={index}
+                                        key={alert.alertId || index}
                                         className={animationClass} // Apply the animation class
                                         style={{
                                             ...styles.logItem,
@@ -406,6 +420,7 @@ function App() {
                                         onMouseEnter={() => setHoveredIndex(index)}
                                         onMouseLeave={() => setHoveredIndex(null)}
                                     >
+                                        {/*}
                                         <strong>ID:</strong> {alert.alertId}<br />
                                         <strong>Source:</strong> {alert.sourceType}<br />
                                         <strong>Data:</strong> {alert.logHash}<br />
@@ -417,6 +432,39 @@ function App() {
                                         <strong>Model:</strong> {alert.modelVersion}<br />
                                         <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
                                         <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
+                                        */}
+                                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                            <strong>ID:</strong> {alert.alertId}
+                                            <span style={{
+                                                fontSize: '0.7em', 
+                                                background: isLive ? '#240572ff' : '#27ae60', 
+                                                padding: '2px 6px', 
+                                                borderRadius: '4px'
+                                            }}>
+                                                {isLive ? "📡 LIVE STREAM" : "🔗 BLOCKCHAIN"}
+                                            </span>
+                                        </div>
+                                        
+                                        <strong>Source:</strong> {alert.sourceType}<br />
+                                        <strong>Data:</strong> {isLive ? alert.logData : alert.logHash}<br />
+                                        
+                                        <strong>Status:</strong> {isSuspicious ?
+                                            <span style={{ ...styles.statusText, ...styles.suspiciousText }}>🔴 SUSPICIOUS</span> :
+                                            <span style={{ ...styles.statusText, ...styles.safeText }}>🟢 SAFE</span>
+                                        }<br />
+                                        
+                                        {!isLive && (
+                                            <>
+                                                <strong>Confidence:</strong> {alert.confidence}%<br />
+                                                <strong>Model:</strong> {alert.modelVersion}<br />
+                                            </>
+                                        )}
+                                        
+                                        <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
+                                        
+                                        {alert.reporter && (
+                                            <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
+                                        )}
                                     </li>
                                 );
                             })}
