@@ -36,6 +36,9 @@ def parse_snort_alert(line):
 def monitor_snort_log():
     print(f"[{datetime.now()}] Monitoring Snort alerts...")
 
+    while not os.path.exists(SNORT_ALERT_FILE):
+        t.sleep(1)
+
     with open(SNORT_ALERT_FILE, "r", encoding="utf-8", errors="ignore") as file:
         file.seek(0, os.SEEK_END)
 
@@ -75,4 +78,7 @@ if __name__ == "__main__":
     thread = th.Thread(target=monitor_snort_log, daemon=True)
     thread.start()
     print("🟢 Sniffing Safe Traffic... (Press Ctrl+C to stop)")
-    sniff(prn=capture_live_safe_traffic, store=0, filter="ip", count=0)
+    try:
+        sniff(prn=capture_live_safe_traffic, store=0, filter="ip", count=0)
+    except KeyboardInterrupt:
+        print("\nStopping...")

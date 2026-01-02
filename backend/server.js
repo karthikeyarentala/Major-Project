@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'tower wash certain crack impulse head sick kiwi caution cruel cloth rug';
+const MNEMONIC = 'shiver acquire kidney scorpion human retire stay surface feature nice level obscure';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xf422FAeA52201eFA672383E603e92432D8141d64';
+const CONTRACT_ADDRESS = '0x28b3f26D9Df1526D4825FBaEa84a7755803CfC0E';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
