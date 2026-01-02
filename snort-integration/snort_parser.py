@@ -1,7 +1,9 @@
-import time
-import requests
+import time as t
+import requests as req
 import re
 import os
+import threading as th
+from scapy.all import sniff, IP, TCP, UDP, ICMP
 from datetime import datetime
 
 SNORT_ALERT_FILE = r"C:\Snort\log\alert.ids"
@@ -12,13 +14,11 @@ SNORT_PATTERN = re.compile(
 )
 
 
-def sendToBackend(payload):
+def send_to_backend(payload):
     try:
-        res = requests.post(BACKEND_API_URL, json=payload, timeout=2)
-        res.raise_for_status()
-        print("✅ Sent:", payload['logData'])
-    except requests.exceptions.RequestException as e:
-        print("❌ Backend error:", e)
+       req.post(BACKEND_API_URL, json=payload, timeout=1)
+    except:
+        pass
 
 def parse_snort_alert(line):
     match = SNORT_PATTERN.search(line)
@@ -26,12 +26,13 @@ def parse_snort_alert(line):
         return None
 
     return {
-        "alertId": f"SNORT-{match.group(1)}-{int(time.time())}",
+        "alertId": f"SNORT-{match.group(1)}-{int(t.time())}",
         "sourceType": "Snort-IDS",
         "severity": "High",
         "logData": f"{match.group(2)} | {match.group(4)} -> {match.group(5)} | {match.group(3)}"
     }
 
+# Monitor suspicious traffic
 def monitor_snort_log():
     print(f"[{datetime.now()}] Monitoring Snort alerts...")
 
@@ -41,16 +42,37 @@ def monitor_snort_log():
         while True:
             line = file.readline()
             if not line:
-                time.sleep(0.2)
+                t.sleep(0.1)
                 continue
+            match = SNORT_PATTERN.search(line)
+            if match:
+                payload = {
+                    "alertId": f"SNORT-{match.group(1)}-{int(t.time())}",
+                    "sourceType": "Snort-IDS",
+                    "severity": "Suspicious",  # Hardcoded label
+                    "logData": f"ALERT: {match.group(2)} | {match.group(4)} -> {match.group(5)}"
+                }
+                print(f"🔥 SUSPICIOUS: {match.group(2)}")
+                send_to_backend(payload)
+                
 
-            print("[RAW]", line.strip())
-            print("[MATCH]", bool(SNORT_PATTERN.search(line)))
+# Monitor Safe traffic
+def capture_live_safe_traffic(packet):
+    if packet.haslayer(IP):
+        src = packet[IP].src
+        dst = packet[IP].dst
+        protocol = packet[IP].proto
 
-            alert = parse_snort_alert(line)
-            if alert:
-                print("🚨 ALERT DETECTED")
-                sendToBackend(alert)
+        payload = {
+            "alertId": f"SAFE-{int(t.time()*1000)}",
+            "sourceType": "Live-Sniffer",
+            "severity": "Safe", # Hardcoded label
+            "logData": f"PASS: {src} -> {dst} | Protocol: {protocol}"
+        }
+        send_to_backend(payload)
 
 if __name__ == "__main__":
-    monitor_snort_log()
+    thread = th.Thread(target=monitor_snort_log, daemon=True)
+    thread.start()
+    print("🟢 Sniffing Safe Traffic... (Press Ctrl+C to stop)")
+    sniff(prn=capture_live_safe_traffic, store=0, filter="ip", count=0)

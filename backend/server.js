@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'gasp delay wing six film castle rich vibrant onion coin seat denial';
+const MNEMONIC = 'tower wash certain crack impulse head sick kiwi caution cruel cloth rug';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xDdD532814D19c5ff07C31E4C1fA5207777E81687';
+const CONTRACT_ADDRESS = '0xf422FAeA52201eFA672383E603e92432D8141d64';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -75,6 +75,7 @@ app.post('/api/log-alert', async (req, res) => {
         if (!alertId || !sourceType || !logData) {
             return res.status(400).json({ error: "Missing required fields." });
         }
+        const isSus = (severity === 'Suspicious' || severity === 'Malicious' || severity === 'High'); 
 
         // This sends the data to the UI before it even touches the blockchain
         io.emit('new-live-log', {
@@ -82,43 +83,32 @@ app.post('/api/log-alert', async (req, res) => {
             sourceType,
             logData,
             severity: severity || 'Safe', 
+            isSuspicious: isSus,
             timestamp: Math.floor(Date.now() / 1000)
         });
 
         console.log(`📡 Broadcasted live log: ${alertId} (${severity})`);
 
-        // IF SAFE TRAFFIC, STOP HERE
-        if (severity === 'Safe') {
-            return res.json({ success: true, message: "Safe traffic broadcasted." });
+        if(!isSus) {
+          return res.json({ success: true, message: "Safe traffic broadcasted." });
         }
+        console.log(`🚨 Archiving Suspicious Alert to Blockchain: ${alertId}`);        // IF SAFE TRAFFIC, STOP HERE
 
-        // IF SUSPICIOUS, CONTINUE TO ML & BLOCKCHAIN
-        console.log(`🔍 Processing Suspicious log: ${alertId}`);
         const logHash = crypto.createHash('sha256').update(logData).digest('hex');
         const logHashBytes32 = '0x' + logHash;
 
-        // ML microservice
-        let mlResult;
-        try {
-            const response = await axios.post(ML_API_URL, { logData: logData });
-            mlResult = response.data;
-        } catch (err) {
-            console.error("❌ Error contacting ML service:", err.message);
-            return res.status(500).json({ error: "ML service unavailable" });
-        }
+        const confPct = 100;
+        const modelVer = "Snort-Rule-Engine";
 
-        const isSuspicious = mlResult.isSuspicious || false;
-        const confidencePct = Math.round((mlResult.confidence || 0) * 100);
-        const modelVersion = mlResult.modelVersion || "unknown";
 
         // Storing in blockchain
         const transaction = idsLogsContract.methods.addAlert(
             alertId,
             sourceType,
             logHashBytes32,
-            isSuspicious,
-            confidencePct,
-            modelVersion
+            true,
+            confPct,
+            modelVer
         );
 
         const txReceipt = await transaction.send({
