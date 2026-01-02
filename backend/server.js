@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'captain feature risk legend lumber neutral weather antenna spatial wet ordinary burden';
+const MNEMONIC = 'emotion bachelor thought purity cannon rack eager palm write claim tongue poem';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xC80cFd948637dF2e1893115f03222B78Ee4D1d1e';
+const CONTRACT_ADDRESS = '0x01552ec0fF99435b684bE4F30951FB445266d149';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 

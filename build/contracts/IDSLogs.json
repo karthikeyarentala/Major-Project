@@ -13308,10 +13308,16 @@
       "links": {},
       "address": "0xC80cFd948637dF2e1893115f03222B78Ee4D1d1e",
       "transactionHash": "0x7a1e414c404e6b3cdb168550680db9ad705e163d48a6dec8ae344ecea6a07a0f"
+    },
+    "1767193506073": {
+      "events": {},
+      "links": {},
+      "address": "0x01552ec0fF99435b684bE4F30951FB445266d149",
+      "transactionHash": "0xfa710b57774f8088017f022f59d7cdea54dade05d282a9e26332d796f4c8547a"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-12-31T14:25:58.343Z",
+  "updatedAt": "2025-12-31T15:06:08.932Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
