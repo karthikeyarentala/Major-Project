@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'shiver acquire kidney scorpion human retire stay surface feature nice level obscure';
+const MNEMONIC = 'recall wheel produce eye habit must human space card expand exotic miracle';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x28b3f26D9Df1526D4825FBaEa84a7755803CfC0E';
+const CONTRACT_ADDRESS = '0xCB90DADa293C1e7457bff228493a87DB8409C18E';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
