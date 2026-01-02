@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'emotion bachelor thought purity cannon rack eager palm write claim tongue poem';
+const MNEMONIC = 'gasp delay wing six film castle rich vibrant onion coin seat denial';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x01552ec0fF99435b684bE4F30951FB445266d149';
+const CONTRACT_ADDRESS = '0xDdD532814D19c5ff07C31E4C1fA5207777E81687';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -68,6 +68,7 @@ const io = new Server(server, {
 })
 
 app.post('/api/log-alert', async (req, res) => {
+    console.log("Recieved Body:", req.body);
     try {
         const { alertId, sourceType, logData, severity } = req.body;
 

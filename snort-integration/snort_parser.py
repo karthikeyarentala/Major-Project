@@ -26,7 +26,7 @@ def parse_snort_alert(line):
         return None
 
     return {
-        "alertID": f"SNORT-{match.group(1)}-{int(time.time())}",
+        "alertId": f"SNORT-{match.group(1)}-{int(time.time())}",
         "sourceType": "Snort-IDS",
         "severity": "High",
         "logData": f"{match.group(2)} | {match.group(4)} -> {match.group(5)} | {match.group(3)}"
