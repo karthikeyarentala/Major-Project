@@ -60,7 +60,13 @@ def monitor_snort_log():
                 
 
 # Monitor Safe traffic
+last_safe_time = 0
 def capture_live_safe_traffic(packet):
+    global last_safe_time
+    curr_time = t.time()
+    if curr_time - last_safe_time < 2:
+        return
+    
     if packet.haslayer(IP):
         src = packet[IP].src
         dst = packet[IP].dst
@@ -69,10 +75,11 @@ def capture_live_safe_traffic(packet):
         payload = {
             "alertId": f"SAFE-{int(t.time()*1000)}",
             "sourceType": "Live-Sniffer",
-            "severity": "Safe", # Hardcoded label
+            "severity": "Safe",
             "logData": f"PASS: {src} -> {dst} | Protocol: {protocol}"
         }
         send_to_backend(payload)
+        last_safe_time = curr_time
 
 if __name__ == "__main__":
     thread = th.Thread(target=monitor_snort_log, daemon=True)

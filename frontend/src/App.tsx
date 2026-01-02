@@ -94,7 +94,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xCB90DADa293C1e7457bff228493a87DB8409C18E'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0x0ef1F571fD254Aa96d959234444efa8E0AaeFf8E'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 //const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -401,7 +401,7 @@ function App() {
                             {allLogs.map((alert, index) => {
                                 const isHovered = hoveredIndex === index;
                                 const isLive = !alert.reporter;
-                                const isSuspicious = alert.severity === 'Suspicious' || alert.isSuspicious;
+                                const isSuspicious = alert.isSuspicious === true;
                                 const baseBorderStyle = isSuspicious ? styles.logSuspiciousBorder : styles.logSafeBorder;
                                 const hoverStyle = isHovered
                                     ? (isSuspicious ? styles.logItemHoverSuspicious : styles.logItemHoverSafe)
@@ -420,7 +420,7 @@ function App() {
                                         onMouseEnter={() => setHoveredIndex(index)}
                                         onMouseLeave={() => setHoveredIndex(null)}
                                     >
-                                        {/*}
+                                        
                                         <strong>ID:</strong> {alert.alertId}<br />
                                         <strong>Source:</strong> {alert.sourceType}<br />
                                         <strong>Data:</strong> {alert.logHash}<br />
@@ -432,7 +432,7 @@ function App() {
                                         <strong>Model:</strong> {alert.modelVersion}<br />
                                         <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
                                         <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
-                                        */}
+                                        
                                         <div style={{display: 'flex', justifyContent: 'space-between'}}>
                                             <strong>ID:</strong> {alert.alertId}
                                             <span style={{

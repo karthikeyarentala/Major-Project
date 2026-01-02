@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'recall wheel produce eye habit must human space card expand exotic miracle';
+const MNEMONIC = 'attend minimum conduct frog season glide cave diagram season slogan rookie spray';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xCB90DADa293C1e7457bff228493a87DB8409C18E';
+const CONTRACT_ADDRESS = '0x0ef1F571fD254Aa96d959234444efa8E0AaeFf8E';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -70,7 +70,8 @@ const io = new Server(server, {
 app.post('/api/log-alert', async (req, res) => {
     console.log("Recieved Body:", req.body);
     try {
-        const { alertId, sourceType, logData, severity } = req.body;
+        const { alertId, sourceType, logData } = req.body;
+        const severity = req.body.severity;
 
         if (!alertId || !sourceType || !logData) {
             return res.status(400).json({ error: "Missing required fields." });
@@ -79,10 +80,7 @@ app.post('/api/log-alert', async (req, res) => {
 
         // This sends the data to the UI before it even touches the blockchain
         io.emit('new-live-log', {
-            alertId,
-            sourceType,
-            logData,
-            severity: severity || 'Safe', 
+            ...req.body,
             isSuspicious: isSus,
             timestamp: Math.floor(Date.now() / 1000)
         });
