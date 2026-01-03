@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'attend minimum conduct frog season glide cave diagram season slogan rookie spray';
+const MNEMONIC = 'theme math daughter duty entire liquid piece hold execute visa feel include';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x0ef1F571fD254Aa96d959234444efa8E0AaeFf8E';
+const CONTRACT_ADDRESS = '0x57a1F929233ae84a23c7786150331d7495a056E3';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -119,9 +119,9 @@ app.post('/api/log-alert', async (req, res) => {
         res.json({
             success: true,
             txHash: txReceipt.transactionHash,
-            isSuspicious,
-            confidencePct,
-            modelVersion,
+            isSuspicious: isSus,
+            confidencePct: confPct,
+            modelVersion: modelVer,
         });
 
     } catch (err) {
