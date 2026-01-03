@@ -32,6 +32,16 @@ def parse_snort_alert(line):
         "logData": f"{match.group(2)} | {match.group(4)} -> {match.group(5)} | {match.group(3)}"
     }
 
+# defining the severity
+def get_severity(rule_id, alert_msg):
+    if "Traffic Detected" in alert_msg:
+        return "Info"
+    
+    if any(word in alert_msg.upper() for word in ["DOS", "DDOS", "ATTACK", "EXPLOIT", "MALWARE", "RANSOMWARE"]):
+        return "Suspicious"
+    return "low"
+
+
 # Monitor suspicious traffic
 def monitor_snort_log():
     print(f"[{datetime.now()}] Monitoring Snort alerts...")
@@ -49,13 +59,18 @@ def monitor_snort_log():
                 continue
             match = SNORT_PATTERN.search(line)
             if match:
+                rule_id = match.group(1)
+                alert_msg = match.group(2)
+
+                currSevirity = get_severity(rule_id, alert_msg)
+
                 payload = {
-                    "alertId": f"SNORT-{match.group(1)}-{int(t.time())}",
+                    "alertId": f"SNORT-{rule_id}-{int(t.time())}",
                     "sourceType": "Snort-IDS",
-                    "severity": "Suspicious",  # Hardcoded label
-                    "logData": f"ALERT: {match.group(2)} | {match.group(4)} -> {match.group(5)}"
+                    "severity": currSevirity,
+                    "logData": f"ALERT: {alert_msg} | {match.group(4)} -> {match.group(5)}"
                 }
-                print(f"🔥 SUSPICIOUS: {match.group(2)}")
+                print(f"🔥 SUSPICIOUS: {alert_msg}")
                 send_to_backend(payload)
                 
 

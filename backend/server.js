@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'theme math daughter duty entire liquid piece hold execute visa feel include';
+const MNEMONIC = 'gain return permit genius tunnel lonely olympic program fun start clever air';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x57a1F929233ae84a23c7786150331d7495a056E3';
+const CONTRACT_ADDRESS = '0x471Fe8C08389Bf07FEf3282E471959204c32461e';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
@@ -77,6 +77,9 @@ app.post('/api/log-alert', async (req, res) => {
             return res.status(400).json({ error: "Missing required fields." });
         }
         const isSus = (severity === 'Suspicious' || severity === 'Malicious' || severity === 'High'); 
+        if(!isSus){
+          return res.json({ success: true, message: "Safe traffic broadcasted." });
+        }
 
         // This sends the data to the UI before it even touches the blockchain
         io.emit('new-live-log', {
