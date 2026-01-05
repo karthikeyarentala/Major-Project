@@ -1,7 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
 const { Web3 } = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const IDSLogsContract = require('../build/contracts/IDSLogs.json');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
@@ -10,149 +11,106 @@ const axios = require('axios');
 const crypto = require('crypto');
 const http = require('http');
 const { Server } = require('socket.io');
+const IDSLogsContract = require('../build/contracts/IDSLogs.json');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'exotic drastic obscure stage acoustic solid battle spin forum lunar token shove';
+const MNEMONIC = 'worry drink banner alter behave someone vendor settle jacket forum frozen lady';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xb826EE42dD7d6ec9385bbA3b342bE4D1EcDDF5D7';
-const ML_API_URL = 'http://127.0.0.1:5000/predict';
+const CONTRACT_ADDRESS = '0x9706DB6E3331553FedFb0399Ec63b77755D4E926';
+const API_KEY = process.env.API_KEY;
 const PORT = 3001;
 
-const contractPath = path.resolve(__dirname, '../build/contracts/IDSLogs.json');
-const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
-const contractABI = contractJson.abi;
-
-//Initialize Web3 connection and get account
-let web3, idsLogsContract, acc;
+let web3, contract, account, web3Ready = false;
 
 (async () => {
-  try {
-    console.log("🔄 Initializing provider...");
-    const provider = new HDWalletProvider({
-        mnemonic: MNEMONIC,
-        providerOrUrl: RPC_URL,
-    });
+  const provider = new HDWalletProvider({
+      mnemonic: MNEMONIC,
+      providerOrUrl: RPC_URL,
+  })
+  web3 = new Web3(provider);
+  const accounts = await web3.eth.getAccounts();
+  account = accounts[0];
 
-    web3 = new Web3(provider);
-        
-    //legacy transactions for compatibility with ganache-cli
-    /*web3.eth.transactionConfirmationBlocks = 1;
-    web3.eth.transactionBlockTimeout = 5;
-    web3.eth.defaultTransactionType = 0;*/
+  contract = new web3.eth.Contract(
+    IDSLogsContract.abi,
+    CONTRACT_ADDRESS
+  );
 
-    await web3.eth.net.isListening();
-    console.log("✅ Connected to Ethereum network");
+  web3Ready = true;
 
-    const accounts = await web3.eth.getAccounts();
-    acc = accounts[0];
-    console.log(`✅ Using account: ${acc}`);
-
-    const contractPath = path.resolve(__dirname, '../build/contracts/IDSLogs.json');
-    const contractJson = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
-    const contractABI = contractJson.abi;
-
-    idsLogsContract = new web3.eth.Contract(contractABI, CONTRACT_ADDRESS);
-    console.log(`✅ Contract loaded at: ${CONTRACT_ADDRESS}`);
-  } catch (err) {
-    console.error("❌ Web3 initialization failed:", err.message);
-    process.exit(1);
-  }
+  console.log(`Blockchain Connected`);
 })();
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {origin: "*"}
-})
-
-app.post('/api/log-alert', async (req, res) => {
-    console.log("Recieved Body:", req.body);
-    try {
-        const { alertId, sourceType, logData } = req.body;
-        const severity = req.body.severity;
-
-        if (!alertId || !sourceType || !logData) {
-            return res.status(400).json({ error: "Missing required fields." });
-        }
-        const isSus = (severity === 'Suspicious' || severity === 'Malicious' || severity === 'High'); 
-        if(!isSus){
-          return res.json({ success: true, message: "Safe traffic broadcasted." });
-        }
-
-        // This sends the data to the UI before it even touches the blockchain
-        io.emit('new-live-log', {
-            ...req.body,
-            isSuspicious: isSus,
-            timestamp: Math.floor(Date.now() / 1000)
-        });
-
-        console.log(`📡 Broadcasted live log: ${alertId} (${severity})`);
-
-        if(!isSus) {
-          return res.json({ success: true, message: "Safe traffic broadcasted." });
-        }
-        console.log(`🚨 Archiving Suspicious Alert to Blockchain: ${alertId}`);        // IF SAFE TRAFFIC, STOP HERE
-
-        const logHash = crypto.createHash('sha256').update(logData).digest('hex');
-        const logHashBytes32 = '0x' + logHash;
-
-        const confPct = 100;
-        const modelVer = "Snort-Rule-Engine";
-
-
-        // Storing in blockchain
-        const transaction = idsLogsContract.methods.addAlert(
-            alertId,
-            sourceType,
-            logHashBytes32,
-            true,
-            confPct,
-            modelVer
-        );
-
-        const txReceipt = await transaction.send({
-            from: acc,
-            gas: 500000n,
-        });
-
-        console.log(`✅ Blockchain transaction successful: ${txReceipt.transactionHash}`);
-
-        res.json({
-            success: true,
-            txHash: txReceipt.transactionHash,
-            isSuspicious: isSus,
-            confidencePct: confPct,
-            modelVersion: modelVer,
-        });
-
-    } catch (err) {
-        console.error("❌ Error adding alert:", err);
-        res.status(500).json({ error: "Internal server error" });
-    }
+app.use((req, res, next) => {
+if (!web3Ready) return res.status(503).json({error: "Blockchain connection not ready"});
+if (req.headers['x-api-key'] !== API_KEY) {
+  return res.status(403).json({error: "Unauthorized source"});
+}
+next();
 });
 
-//Getting an alert
-app.get("/api/alerts", async (req, res) => {
-  try {
-    const count = await idsLogsContract.methods.getAlertsCount().call();
-    const alerts = [];
+const server = http.createServer(app);
+const io = new Server(server, {cors: {origin: "*"}});
 
-    for (let i = 0; i < count; i++) {
-      const alert = await idsLogsContract.methods.getAlert(i).call();
-      alerts.push(alert);
+app.post('/api/log-alert', async (req, res) => {
+  try{
+    const { alertId, sourceType, severity, logData } = req.body;
+
+    if(!alertId || !sourceType || !severity || !logData){
+      return res.status(400).json({error: "Invalid payload"});
+    }
+    const isSuspicious = severity === "High";
+
+    io.emit('new-live-log', {
+      alertId,
+      sourceType,
+      logData,
+      severity,
+      isSuspicious,
+      timestamp: Math.floor(Date.now()/1000)
+    });
+    
+    if(!isSuspicious){
+      return res.json({success: true});
     }
 
-    res.json(alerts);
-  } catch (err) {
-    console.error("❌ Error fetching alerts:", err);
-    res.status(500).json({ error: "Internal server error" });
+    const hash = crypto.createHash('sha256').update(logData).digest('Hex');
+
+    await contract.methods.addAlert(
+      alertId,
+      sourceType,
+      '0x'+hash,
+      true,
+      100,
+      "Snort-Rule-Engine"
+    ).send({from: account, gas: 500000});
+    res.json({success: true});
+  }
+  catch(err){
+    console.error(err);
+    res.status(500).json({ error: "Backend error" });
   }
 });
 
-// Start the server and initialize web3
-app.listen(PORT, () => {
-    console.log(`Backend server listening at http://localhost:${PORT}`);
-    console.log(`WebSocket server is active for live logs...`);
+app.get('/api/alerts', async (req, res) => {
+    try {
+        const count = await contract.methods.getAlertsCount().call();
+        const calls = [];
+
+        for (let i = 0; i < count; i++) {
+            calls.push(contract.methods.getAlert(i).call());
+        }
+
+        const data = await Promise.all(calls);
+        res.json(data);
+    } catch {
+        res.status(500).json({ error: "Fetch failed" });
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`🚀 Backend running on ${PORT}`);
 });

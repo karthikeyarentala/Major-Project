@@ -1,20 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
-//import type { FormEvent } from 'react';
 import Web3 from 'web3';
 import io from 'socket.io-client';
-const socket = io('http://localhost:3001')
 
 // Define a TypeScript interface for the Alert data structure
-interface Alert {
+interface LiveLog {
+    alertId: string;
+    sourceType: string;
+    logData: string;
+    severity: string;
+    isSuspicious: boolean;
+    timestamp: number;
+}
+
+interface ChainLog {
     alertId: string;
     sourceType: string;
     logHash: string;
-    timestamp: number; 
+    timestamp: number;
     reporter: string;
     isSuspicious: boolean;
     confidence: number;
     modelVersion: string;
 }
+
+type unifiedLog = LiveLog | ChainLog;
 
 // --- MINIMAL CONTRACT ABI ---
 // This replaces the need for the IDSLogs.json file *for this preview*
@@ -94,7 +103,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xb826EE42dD7d6ec9385bbA3b342bE4D1EcDDF5D7'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0x9706DB6E3331553FedFb0399Ec63b77755D4E926'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 //const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -162,20 +171,23 @@ const styles: { [key: string]: React.CSSProperties } = {
 // --- End Styles ---
 
 function App() {
-    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [chainLogs, setChainLogs] = useState<ChainLog[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [apiError, setApiError] = useState<string | null>(null);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [liveLogs, setLiveLogs] = useState<any[]>([]);
 
     useEffect(() => {
-        socket.on('new-live-log', (data) => {
-            setLiveLogs((prev) => [data, ...prev].slice(0, 20)); 
+        const socket = io('http://localhost:3001');
+
+        socket.on('new-live-log', (data: LiveLog) => {
+            setLiveLogs(prev => [data, ...prev].slice(0, 20)); 
         });
+
         return () => {socket.disconnect();};
     }, []);
 
-    const allLogs = [...liveLogs, ...alerts];
+    const allLogs: unifiedLog[] = [...liveLogs, ...chainLogs];
 
     // --- Re-added State for the Form ---
     /*const [newAlertId, setNewAlertId] = useState('');
@@ -204,24 +216,27 @@ function App() {
             const alertCount = await idsLogsContract.methods.getAlertsCount().call();
             const totalAlerts = Number(alertCount); 
             console.log("Alert count from blockchain:", String(totalAlerts));
-                        
-            const fetchedAlerts: Alert[] = [];
-            
-            for (let i = 0; i < totalAlerts; i++) { 
-                const res = await idsLogsContract.methods.getAlert(i).call() as any;
 
-                fetchedAlerts.push({
-                    alertId: res[0],
-                    sourceType: res[1],
-                    logHash: res[2],
-                    timestamp: Number(String(res[3])), 
-                    reporter: res[4],
-                    isSuspicious: res[5],
-                    confidence: Number(String(res[6])),
-                    modelVersion: res[7],
-                });
+            const calls = [];
+            for (let i = 0; i < totalAlerts; i++) {
+                calls.push(idsLogsContract.methods.getAlert(i).call());
             }
-            setAlerts(fetchedAlerts.reverse());
+
+            const results = await Promise.all(calls);
+
+            const fetched: ChainLog[] = results.map((res: any) => ({
+                alertId: res[0],
+                sourceType: res[1],
+                logHash: res[2],
+                timestamp: Number(res[3]),
+                reporter: res[4],
+                isSuspicious: res[5],
+                confidence: Number(res[6]),
+                modelVersion: res[7],
+            }));
+
+            setChainLogs(fetched.reverse());
+
         } catch (error) {
             console.error('Failed to fetch alerts:', error);
             setApiError('Failed to connect to blockchain or fetch alerts. Is Ganache running?');
@@ -392,7 +407,7 @@ function App() {
                         </button>
                     </h2>
 
-                    {loading && alerts.length === 0 ? (
+                    {loading && allLogs.length === 0 ? (
                         <div>Loading alerts...</div>
                     ) : allLogs.length === 0 ? (
                         <p>No Network activity detected at..!</p>
@@ -400,7 +415,7 @@ function App() {
                         <ul style={styles.logList}>
                             {allLogs.map((alert, index) => {
                                 const isHovered = hoveredIndex === index;
-                                const isLive = !alert.reporter;
+                                const isLive = "logData" in alert;
                                 const isSuspicious = alert.isSuspicious === true;
                                 const baseBorderStyle = isSuspicious ? styles.logSuspiciousBorder : styles.logSafeBorder;
                                 const hoverStyle = isHovered
@@ -423,15 +438,26 @@ function App() {
                                         
                                         <strong>ID:</strong> {alert.alertId}<br />
                                         <strong>Source:</strong> {alert.sourceType}<br />
-                                        <strong>Data:</strong> {alert.logHash}<br />
-                                        <strong>Status:</strong> {alert.isSuspicious ?
-                                            <span style={{ ...styles.statusText, ...styles.suspiciousText }}>🔴 SUSPICIOUS</span> :
-                                            <span style={{ ...styles.statusText, ...styles.safeText }}>🟢 SAFE</span>
-                                        }<br />
-                                        <strong>Confidence:</strong> {alert.confidence}%<br />
-                                        <strong>Model:</strong> {alert.modelVersion}<br />
+                                        <strong>Data:</strong> {isLive ? alert.logData : alert.logHash}<br />
+                                        <strong>Status:</strong> 
+                                            {alert.isSuspicious ? (
+                                            <span style={{ ...styles.statusText, ...styles.suspiciousText }}> 🔴 SUSPICIOUS</span>
+                                            ) : (
+                                            <span style={{ ...styles.statusText, ...styles.safeText }}> 🟢 SAFE</span>
+                                            )}
+                                            <br />
+                                        {!isLive && (
+                                            <>
+                                                <strong>Confidence:</strong> {alert.confidence}%<br />
+                                                <strong>Model:</strong> {alert.modelVersion}<br />
+                                            </>
+                                        )}
                                         <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
-                                        <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
+                                        {!isLive && (
+                                            <small style={styles.smallText}>
+                                                <strong>Reporter:</strong> {alert.reporter}
+                                            </small>
+                                        )}
                                         
                                         <div style={{display: 'flex', justifyContent: 'space-between'}}>
                                             <strong>ID:</strong> {alert.alertId}
@@ -462,7 +488,7 @@ function App() {
                                         
                                         <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
                                         
-                                        {alert.reporter && (
+                                        {"reporter" in alert && (
                                             <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
                                         )}
                                     </li>
