@@ -15,9 +15,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'gain return permit genius tunnel lonely olympic program fun start clever air';
+const MNEMONIC = 'exotic drastic obscure stage acoustic solid battle spin forum lunar token shove';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x471Fe8C08389Bf07FEf3282E471959204c32461e';
+const CONTRACT_ADDRESS = '0xb826EE42dD7d6ec9385bbA3b342bE4D1EcDDF5D7';
 const ML_API_URL = 'http://127.0.0.1:5000/predict';
 const PORT = 3001;
 
