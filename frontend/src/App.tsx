@@ -103,7 +103,7 @@ const IDSLogsContract = {
 // --- END MINIMAL ABI ---
 
 
-const contractAddress = '0xF69B942b40b80Fa9387599247D6BAe110B9Bf058'; // PASTE YOUR CONTRACT ADDRESS
+const contractAddress = '0xcF0a463B9254Be16375d8b834D4A8d3fe924270c'; // PASTE YOUR CONTRACT ADDRESS
 const ganachePort = 8545;
 //const backendApiUrl = 'http://127.0.0.1:3001/api/log-alert';
 
@@ -181,7 +181,7 @@ function App() {
         const socket = io('http://localhost:3001');
 
         socket.on('new-live-log', (data: LiveLog) => {
-            setLiveLogs(prev => [data, ...prev].slice(0, 20)); 
+            setLiveLogs(prev => [data, ...prev]); 
         });
 
         return () => {socket.disconnect();};
@@ -436,61 +436,64 @@ function App() {
                                         onMouseLeave={() => setHoveredIndex(null)}
                                     >
                                         
-                                        <strong>ID:</strong> {alert.alertId}<br />
-                                        <strong>Source:</strong> {alert.sourceType}<br />
-                                        <strong>Data:</strong> {isLive ? alert.logData : alert.logHash}<br />
-                                        <strong>Status:</strong> 
-                                            {alert.isSuspicious ? (
-                                            <span style={{ ...styles.statusText, ...styles.suspiciousText }}> 🔴 SUSPICIOUS</span>
+                                        <li
+                                            key={alert.alertId}
+                                            className={animationClass}
+                                            style={{
+                                                ...styles.logItem,
+                                                ...baseBorderStyle,
+                                                ...hoverStyle
+                                            }}
+                                            onMouseEnter={() => setHoveredIndex(index)}
+                                            onMouseLeave={() => setHoveredIndex(null)}
+                                            >
+                                            {/* HEADER ROW */}
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}>
+                                                <div>
+                                                    <strong>ID:</strong> {alert.alertId}
+                                                </div>
+
+                                                <span style={{
+                                                    fontSize: '0.7em',
+                                                    background: isLive ? '#240572ff' : '#27ae60',
+                                                    borderRadius: '5px'
+                                                    }}>
+                                                    {isLive ? "📡 LIVE STREAM" : "🔗 BLOCKCHAIN"}
+                                                </span>
+                                            </div>
+                                            {/* BODY */}
+                                            <strong>Source:</strong> {alert.sourceType}<br />
+                                            <strong>Data:</strong> {isLive ? alert.logData : alert.logHash}<br />
+
+                                            <strong>Status:</strong>{" "}
+                                            {isSuspicious ? (
+                                                <span style={{ ...styles.statusText, ...styles.suspiciousText }}>
+                                                🔴 SUSPICIOUS
+                                                </span>
                                             ) : (
-                                            <span style={{ ...styles.statusText, ...styles.safeText }}> 🟢 SAFE</span>
+                                                <span style={{ ...styles.statusText, ...styles.safeText }}>
+                                                🟢 SAFE
+                                                </span>
                                             )}
                                             <br />
-                                        {!isLive && (
-                                            <>
-                                                <strong>Confidence:</strong> {alert.confidence}%<br />
-                                                <strong>Model:</strong> {alert.modelVersion}<br />
-                                            </>
-                                        )}
-                                        <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
-                                        {!isLive && (
-                                            <small style={styles.smallText}>
-                                                <strong>Reporter:</strong> {alert.reporter}
-                                            </small>
-                                        )}
-                                        
-                                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                                            <strong>ID:</strong> {alert.alertId}
-                                            <span style={{
-                                                fontSize: '0.7em', 
-                                                background: isLive ? '#240572ff' : '#27ae60', 
-                                                padding: '2px 6px', 
-                                                borderRadius: '4px'
-                                            }}>
-                                                {isLive ? "📡 LIVE STREAM" : "🔗 BLOCKCHAIN"}
-                                            </span>
-                                        </div>
-                                        
-                                        <strong>Source:</strong> {alert.sourceType}<br />
-                                        <strong>Data:</strong> {isLive ? alert.logData : alert.logHash}<br />
-                                        
-                                        <strong>Status:</strong> {isSuspicious ?
-                                            <span style={{ ...styles.statusText, ...styles.suspiciousText }}>🔴 SUSPICIOUS</span> :
-                                            <span style={{ ...styles.statusText, ...styles.safeText }}>🟢 SAFE</span>
-                                        }<br />
-                                        
-                                        {!isLive && (
-                                            <>
-                                                <strong>Confidence:</strong> {alert.confidence}%<br />
-                                                <strong>Model:</strong> {alert.modelVersion}<br />
-                                            </>
-                                        )}
-                                        
-                                        <strong>Timestamp:</strong> {new Date(Number(alert.timestamp) * 1000).toLocaleString()}<br />
-                                        
-                                        {"reporter" in alert && (
-                                            <small style={styles.smallText}><strong>Reporter:</strong> {alert.reporter}</small>
-                                        )}
+
+                                            {!isLive && (
+                                                <>
+                                                    <strong>Confidence:</strong> {alert.confidence}%<br />
+                                                    <strong>Model:</strong> {alert.modelVersion}<br />
+                                                    <small style={styles.smallText}>
+                                                        <strong>Reporter:</strong> {alert.reporter}
+                                                    </small><br />
+                                                </>
+                                            )}
+
+                                            <strong>Timestamp:</strong>{" "}
+                                            {new Date(alert.timestamp * 1000).toLocaleString()}
+                                            </li>
                                     </li>
                                 );
                             })}

@@ -12,14 +12,37 @@ BACKEND_API = "http://127.0.0.1:3001/api/log-alert"
 API_KEY = "snort-secret-key"
 
 SNORT_PATTERN = re.compile(
-    r'\[\*\*\]\s+\[1:(\d+):\d+\]\s+(.*?)\s+\[\*\*\].*?\{([A-Z0-9\-]+)\}\s+([\d.:]+)\s+->\s+([\d.:]+)'
+    r'\[\*\*\].*?\]\s+(.*?)\s+\[\*\*\][\s\S]*?\{(\w+)\}\s+([\d.:]+)\s+->\s+([\d.:]+)',
+    re.MULTILINE
 )
+
+""" def classify(alert):
+    msg = alert.upper()
+
+    SUSPICIOUS_KEYWORDS = [
+        "SCAN",
+        "PORTSCAN",
+        "NMAP",
+        "INDICATOR",
+        "PROBE",
+        "UPNP",
+        "DISCOVER",
+        "RECON",
+        "ENUMERATION"
+    ]
+
+    for word in SUSPICIOUS_KEYWORDS:
+        if word in msg:
+            return "High"
+
+    return "Safe" """
 
 def classify(alert):
     msg = alert.upper()
-    if any(x in msg for x in ["DOS", "DDOS", "ATTACK", "EXPLOIT", "MALWARE"]):
+    if any(x in msg for x in ["SCAN", "PROBE", "DISCOVER", "UPNP", "NMAP"]):
         return "High"
     return "Safe"
+
 
 def send(payload):
     try:
@@ -48,12 +71,13 @@ def monitor_snort():
             match = SNORT_PATTERN.search(line)
             if match:
                 rule, msg, proto, src, dst = match.groups()
-                severity = classify(msg)
+                severity, score = classify(msg, rule)
 
                 payload = {
                     "alertId": f"SNORT-{rule}-{uuid.uuid4().hex[:6]}",
                     "sourceType": "Snort IDS",
                     "severity": severity,
+                    "confidence": score,
                     "logData": f"{msg} | {src} -> {dst}"
                 }
 
@@ -62,13 +86,7 @@ def monitor_snort():
 
 def sniff_safe(packet):
     if packet.haslayer(IP):
-        payload = {
-            "alertId": f"SAFE-{uuid.uuid4().hex[:6]}",
-            "sourceType": "Live-Sniffer",
-            "severity": "Safe",
-            "logData": f"{packet[IP].src} -> {packet[IP].dst}"
-        }
-        send(payload)
+        return
 
 
 if __name__ == "__main__":

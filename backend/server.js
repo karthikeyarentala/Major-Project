@@ -1,4 +1,5 @@
 require('dotenv').config();
+//require('events').EventEmitter.defaultMaxListeners = 10;
 
 const express = require('express');
 const { Web3 } = require('web3');
@@ -17,10 +18,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'left uncover waste key scare mix envelope again duty weather crash drink';
+const MNEMONIC = 'enroll notice view return book cream engine castle inflict doll flat price';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xF69B942b40b80Fa9387599247D6BAe110B9Bf058';
-const API_KEY = process.env.API_KEY;
+const CONTRACT_ADDRESS = '0xcF0a463B9254Be16375d8b834D4A8d3fe924270c';
+const API_KEY = "snort-secret-key";
 const PORT = 3001;
 
 let web3, contract, account, web3Ready = false;
@@ -45,24 +46,31 @@ let web3, contract, account, web3Ready = false;
 })();
 
 app.use((req, res, next) => {
-if (!web3Ready) return res.status(503).json({error: "Blockchain connection not ready"});
-if (req.headers['x-api-key'] !== API_KEY) {
-  return res.status(403).json({error: "Unauthorized source"});
-}
-next();
+  if (!web3Ready) {
+    return res.status(503).json({error: "Blockchain connection not ready"});
+  }
+  next();
 });
 
 const server = http.createServer(app);
 const io = new Server(server, {cors: {origin: "*"}});
 
+app.post('/api/log-alert', (req, res, next) => {
+  /*f (req.headers['x-api-key'] !== API_KEY) {
+    console.log("❌ Rejected key:", req.headers["x-api-key"]);
+    return res.status(403).json({ error: "Unauthorized source" });
+  }*/
+  next();
+});
+
 app.post('/api/log-alert', async (req, res) => {
   try{
-    const { alertId, sourceType, severity, logData } = req.body;
+    const { alertId, sourceType, severity, logData, confidence } = req.body;
 
     if(!alertId || !sourceType || !severity || !logData){
       return res.status(400).json({error: "Invalid payload"});
     }
-    const isSuspicious = severity === "High";
+    const isSuspicious = severity !== "Safe";
 
     io.emit('new-live-log', {
       alertId,
@@ -73,11 +81,11 @@ app.post('/api/log-alert', async (req, res) => {
       timestamp: Math.floor(Date.now()/1000)
     });
     
-    if(!isSuspicious){
+    if(severity !== "High"){
       return res.json({success: true});
     }
 
-    const hash = crypto.createHash('sha256').update(logData).digest('Hex');
+    const hash = crypto.createHash('sha256').update(logData).digest('hex');
 
     await contract.methods.addAlert(
       alertId,
