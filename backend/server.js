@@ -17,9 +17,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'worry drink banner alter behave someone vendor settle jacket forum frozen lady';
+const MNEMONIC = 'left uncover waste key scare mix envelope again duty weather crash drink';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x9706DB6E3331553FedFb0399Ec63b77755D4E926';
+const CONTRACT_ADDRESS = '0xF69B942b40b80Fa9387599247D6BAe110B9Bf058';
 const API_KEY = process.env.API_KEY;
 const PORT = 3001;
 
