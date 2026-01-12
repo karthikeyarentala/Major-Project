@@ -3,66 +3,21 @@ import requests as req
 import re
 import os
 import uuid
-from datetime import datetime as dt
-from scapy.all import sniff, IP
-import threading as th
 
-SNORT_ALERT_FILE = r"C:\Snort\log\alert.ids"
+SNORT_ALERT_FILE = r"C:\Snort\log\alert.fast"
 BACKEND_API = "http://127.0.0.1:3001/api/log-alert"
 API_KEY = "snort-secret-key"
 
 SNORT_PATTERN = re.compile(
-    r'\[\*\*\].*?\]\s+(.*?)\s+\[\*\*\][\s\S]*?\{(\w+)\}\s+([\d.:]+)\s+->\s+([\d.:]+)',
-    re.MULTILINE
+    r'\[\*\*\]\s+\[\d+:\d+:\d+\]\s+(.*?)\s+\[\*\*\].*\{(\w+)\}\s+([\d\.]+:\d+)\s+->\s+([\d\.]+:\d+)'
 )
 
-""" def classify(alert):
-    msg = alert.upper()
-
-    SUSPICIOUS_KEYWORDS = [
-        "SCAN",
-        "PORTSCAN",
-        "NMAP",
-        "INDICATOR",
-        "PROBE",
-        "UPNP",
-        "DISCOVER",
-        "RECON",
-        "ENUMERATION"
-    ]
-
-    for word in SUSPICIOUS_KEYWORDS:
-        if word in msg:
+def classify(msg):
+    msg = msg.upper()
+    for k in ["SCAN", "PORTSCAN", "NMAP", "PROBE", "RECON"]:
+        if k in msg:
             return "High"
-
-    return "Safe" """
-
-def classify(alert):
-    msg = alert.upper()
-
-    suspicious_keywords = [
-        "SCAN",
-        "PORTSCAN",
-        "INDICATOR-SCAN",
-        "UPNP",
-        "RECON",
-        "PROBE",
-        "ENUMERATION",
-        "DOS",
-        "DDOS",
-        "EXPLOIT",
-        "MALWARE",
-        "BRUTE",
-        "ATTACK"
-    ]
-
-    for word in suspicious_keywords:
-        if word in msg:
-            return "High"
-
     return "Safe"
-
-
 
 def send(payload):
     try:
@@ -72,45 +27,43 @@ def send(payload):
             headers={"x-api-key": API_KEY},
             timeout=3
         )
-        if r.status_code != 200:
-            print("❌ Backend error:", r.text)
+        print("➡ Sent to backend:", r.status_code)
     except Exception as e:
-        print("❌ Backend unreachable:", e)
+        print("❌ Backend error:", e)
 
 def monitor_snort():
     print("🟢 Monitoring Snort alerts...")
+
     while not os.path.exists(SNORT_ALERT_FILE):
         t.sleep(1)
-    with open(SNORT_ALERT_FILE, "r", errors='ignore') as f:
+
+    with open(SNORT_ALERT_FILE, "r", errors="ignore") as f:
         f.seek(0, os.SEEK_END)
+
         while True:
             line = f.readline()
             if not line:
                 t.sleep(0.1)
                 continue
-            match = SNORT_PATTERN.search(line)
-            if match:
-                rule, msg, proto, src, dst = match.groups()
-                severity = classify(msg)
 
-                if severity == "Safe":
-                    continue
+            print("RAW:", line.strip())
 
-                payload = {
-                    "alertId": f"SNORT-{rule}-{uuid.uuid4().hex[:6]}",
-                    "sourceType": "Snort IDS",
-                    "severity": severity,
-                    "logData": f"{msg} | {src} -> {dst}"
-                }
+            m = SNORT_PATTERN.search(line)
+            if not m:
+                print("❌ NO MATCH")
+                continue
 
-                print(f"🔥 {severity}: {msg}")
-                send(payload)
+            msg, proto, src, dst = m.groups()
+            sev = classify(msg)
 
-""" def sniff_safe(packet):
-    if packet.haslayer(IP):
-        return """
+            payload = {
+                "alertId": "SNORT-" + uuid.uuid4().hex[:6],
+                "sourceType": "Snort IDS",
+                "severity": sev,
+                "logData": f"{msg} | {src} -> {dst}"
+            }
 
+            print(f"🔥 DETECTED [{sev}] {msg}")
+            send(payload)
 
-if __name__ == "__main__":
-    th.Thread(target=monitor_snort, daemon=True).start()
-    # sniff(prn=sniff_safe, filter="ip", store=0)
+monitor_snort()

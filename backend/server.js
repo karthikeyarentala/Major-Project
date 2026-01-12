@@ -18,9 +18,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'fluid ranch anxiety net kidney love brush pottery nature empower onion suspect';
+const MNEMONIC = 'figure arctic afford charge include photo attitude gauge ordinary dentist faint cradle';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0x032534C167C1bCa048cb19158349a1DeD1F4cE69';
+const CONTRACT_ADDRESS = '0xB6D6E56711d42D3228A3b0dad92d1485863E8Df3';
 const API_KEY = "snort-secret-key";
 const PORT = 3001;
 
