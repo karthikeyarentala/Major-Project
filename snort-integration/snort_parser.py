@@ -39,9 +39,29 @@ SNORT_PATTERN = re.compile(
 
 def classify(alert):
     msg = alert.upper()
-    if any(x in msg for x in ["SCAN", "PROBE", "DISCOVER", "UPNP", "NMAP"]):
-        return "High"
+
+    suspicious_keywords = [
+        "SCAN",
+        "PORTSCAN",
+        "INDICATOR-SCAN",
+        "UPNP",
+        "RECON",
+        "PROBE",
+        "ENUMERATION",
+        "DOS",
+        "DDOS",
+        "EXPLOIT",
+        "MALWARE",
+        "BRUTE",
+        "ATTACK"
+    ]
+
+    for word in suspicious_keywords:
+        if word in msg:
+            return "High"
+
     return "Safe"
+
 
 
 def send(payload):
@@ -71,24 +91,26 @@ def monitor_snort():
             match = SNORT_PATTERN.search(line)
             if match:
                 rule, msg, proto, src, dst = match.groups()
-                severity, score = classify(msg, rule)
+                severity = classify(msg)
+
+                if severity == "Safe":
+                    continue
 
                 payload = {
                     "alertId": f"SNORT-{rule}-{uuid.uuid4().hex[:6]}",
                     "sourceType": "Snort IDS",
                     "severity": severity,
-                    "confidence": score,
                     "logData": f"{msg} | {src} -> {dst}"
                 }
 
                 print(f"🔥 {severity}: {msg}")
                 send(payload)
 
-def sniff_safe(packet):
+""" def sniff_safe(packet):
     if packet.haslayer(IP):
-        return
+        return """
 
 
 if __name__ == "__main__":
     th.Thread(target=monitor_snort, daemon=True).start()
-    sniff(prn=sniff_safe, filter="ip", store=0)
+    # sniff(prn=sniff_safe, filter="ip", store=0)

@@ -18,9 +18,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MNEMONIC = 'enroll notice view return book cream engine castle inflict doll flat price';
+const MNEMONIC = 'fluid ranch anxiety net kidney love brush pottery nature empower onion suspect';
 const RPC_URL = 'http://127.0.0.1:8545';
-const CONTRACT_ADDRESS = '0xcF0a463B9254Be16375d8b834D4A8d3fe924270c';
+const CONTRACT_ADDRESS = '0x032534C167C1bCa048cb19158349a1DeD1F4cE69';
 const API_KEY = "snort-secret-key";
 const PORT = 3001;
 
